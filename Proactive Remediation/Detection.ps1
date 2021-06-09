@@ -5,7 +5,7 @@
 .DESCRIPTION
     This is the detection script for a Proactive Remediation in Endpoint Analytics used by the CloudLAPS solution.
     
-    It will create an event log named CloudLAPS-Rotation if it doesn't already exist and ensure the remediation script is always triggered.
+    It will create an event log named CloudLAPS-Client if it doesn't already exist and ensure the remediation script is always triggered.
 
 .EXAMPLE
     .\Detection.ps1
