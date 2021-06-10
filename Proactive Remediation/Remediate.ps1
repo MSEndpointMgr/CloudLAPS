@@ -329,13 +329,13 @@ Process {
     catch [System.Exception] {
         switch ($PSItem.Exception.Response.StatusCode) {
             "Forbidden" {
-                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Warning -EventId 14 -Message "CloudLAPS: Forbidden, secret data was not allowed to be updated"; $ExitCode = 0
+                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Warning -EventId 14 -Message "CloudLAPS: Forbidden, password was not allowed to be updated"; $ExitCode = 0
             }
             "BadRequest" {
-                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 15 -Message "CloudLAPS: BadRequest, failed to update secret data"; $ExitCode = 1
+                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 15 -Message "CloudLAPS: BadRequest, failed to update password"; $ExitCode = 1
             }
             default {
-                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 12 -Message "CloudLAPS: Failed to call Azure Function URL. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
+                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 12 -Message "CloudLAPS: Call to Azure Function URI failed. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
             }
         }
     }
