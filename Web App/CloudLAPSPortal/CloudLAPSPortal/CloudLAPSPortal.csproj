@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UserSecretsId>796197a7-b3da-485a-8eda-efd9373a2e17</UserSecretsId>
+    <Company>MSEndpointMgr.com</Company>
+    <Authors>Nickolaj Andersen</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.1.0" />
+    <PackageReference Include="Azure.Identity" Version="1.4.0" />
+    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.1.0" />
+    <PackageReference Include="LogAnalytics.Extensions.Logging" Version="1.2.1" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="1.9.2" />
+    <PackageReference Include="Microsoft.Identity.Web.UI" Version="1.9.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.5" />
+  </ItemGroup>
+
+</Project>
