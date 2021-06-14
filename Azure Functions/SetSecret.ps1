@@ -282,20 +282,7 @@ function Test-Encryption {
     }
 }
 
-function New-Password {
-    # Function source code: https://github.com/jseerden/SLAPS/blob/master/Set-KeyVaultSecret.ps1
-    $Alphabets = 'a,b,c,d,e,f,g,h,i,j,k,m,n,p,q,r,t,u,v,w,x,y,z'
-    $Numbers = 2..9
-    $SpecialCharacters = '!,@,#,$,%,&,*,?,+'
-    $Array = @()
-    $Array += $Alphabets.Split(',') | Get-Random -Count 10
-    $Array[0] = $Array[0].ToUpper()
-    $Array[-1] = $Array[-1].ToUpper()
-    $Array += $Numbers | Get-Random -Count 3
-    $Array += $SpecialCharacters.Split(',') | Get-Random -Count 3
-    
-    return ($Array | Get-Random -Count $Array.Count) -join ""
-}
+Write-Output -InputObject "Inbound request from IP: $($TriggerMetadata.'$Request'.headers.'x-forwarded-for'.Split(":")[0])"
 
 # Read application settings for Key Vault values
 $KeyVaultName = $env:KeyVaultName
@@ -399,7 +386,7 @@ if ($HeaderValidation -eq $true) {
                         # Continue if update of existing secret was allowed or if new should be created
                         if ($KeyVaultSecretUpdateAllowed -eq $true) {
                             # Generate a random password
-                            $Password = New-Password
+                            $Password = Invoke-PasswordGeneration
                             $SecretValue = ConvertTo-SecureString -String $Password -AsPlainText -Force
                 
                             # Construct hash-table for Tags property
