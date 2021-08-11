@@ -190,8 +190,6 @@ function Test-AzureADDeviceAlternativeSecurityIds {
                 # Convert computed hash to Base64 string
                 $ComputedHashString = [System.Convert]::ToBase64String($ComputedHash)
 
-                Write-Output -InputObject "DEBUG: Device hash string: $($ComputedHashString)"
-                Write-Output -InputObject "DEBUG: Device hash string: $($AzureADDeviceAlternativeSecurityIds.PublicKeyHash)"
                 # Validate match
                 if ($ComputedHashString -match $AzureADDeviceAlternativeSecurityIds.PublicKeyHash) {
                     return $true
