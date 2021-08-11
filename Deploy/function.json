@@ -14,7 +14,7 @@
     },
     "AppServicePlanSKU": {
       "type": "string",
-      "defaultValue": "EP12",
+      "defaultValue": "EP1",
       "allowedValues": [
         "Y1",
         "EP1",
