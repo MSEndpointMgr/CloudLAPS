@@ -132,10 +132,6 @@ resource azureFunction 'Microsoft.Web/sites@2020-12-01' = {
           name: 'KeyVaultName'
           value: KeyVaultName
         }
-        {
-          name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: '1'
-        }
       ]
     }
   }

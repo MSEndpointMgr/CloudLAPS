@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "16757872760208958938"
+      "templateHash": "9796050751839948786"
     }
   },
   "parameters": {
@@ -151,10 +151,6 @@
             {
               "name": "KeyVaultName",
               "value": "[parameters('KeyVaultName')]"
-            },
-            {
-              "name": "WEBSITE_RUN_FROM_PACKAGE",
-              "value": "1"
             }
           ]
         }
