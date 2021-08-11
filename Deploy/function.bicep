@@ -8,7 +8,7 @@ param FunctionAppName string
 ])
 param FunctionAppType string = 'EP1'
 param KeyVaultName string
-param Tags object
+param Tags object = {}
 
 // Define variables
 var UniqueString = uniqueString(resourceGroup().id)
