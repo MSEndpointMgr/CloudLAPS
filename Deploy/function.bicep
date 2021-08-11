@@ -6,7 +6,7 @@ param FunctionAppName string
     'EP2'
     'EP3'
 ])
-param FunctionAppType string = 'EP1'
+param AppServicePlanSKU string = 'EP1'
 param KeyVaultName string
 param Tags object = {}
 
@@ -40,7 +40,7 @@ resource appserviceplan 'Microsoft.Web/serverfarms@2021-01-15' = {
   location: resourceGroup().location
   kind: 'Windows'
   sku: {
-    name: FunctionAppType
+    name: AppServicePlanSKU
   }
   tags: Tags
 }

@@ -5,14 +5,14 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "8422369462455862890"
+      "templateHash": "16757872760208958938"
     }
   },
   "parameters": {
     "FunctionAppName": {
       "type": "string"
     },
-    "FunctionAppType": {
+    "AppServicePlanSKU": {
       "type": "string",
       "defaultValue": "EP1",
       "allowedValues": [
@@ -63,7 +63,7 @@
       "location": "[resourceGroup().location]",
       "kind": "Windows",
       "sku": {
-        "name": "[parameters('FunctionAppType')]"
+        "name": "[parameters('AppServicePlanSKU')]"
       },
       "tags": "[parameters('Tags')]"
     },
