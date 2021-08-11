@@ -134,7 +134,7 @@ resource azureFunction 'Microsoft.Web/sites@2020-12-01' = {
         }
         {
           name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip'
+          value: '1'
         }
       ]
     }
@@ -167,5 +167,14 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
       name: 'standard'
       family: 'A'
     }
+  }
+}
+
+// Add ZipDeploy for function app
+resource zipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
+  parent: azureFunction
+  name: 'ZipDeploy'
+  properties: {
+      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip'
   }
 }
