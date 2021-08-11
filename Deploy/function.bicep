@@ -132,6 +132,10 @@ resource azureFunction 'Microsoft.Web/sites@2020-12-01' = {
           name: 'KeyVaultName'
           value: KeyVaultName
         }
+        {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip'
+        }
       ]
     }
   }

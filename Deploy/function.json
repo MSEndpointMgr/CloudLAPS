@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "14238686606965386123"
+      "templateHash": "8273546372611891567"
     }
   },
   "parameters": {
@@ -151,6 +151,10 @@
             {
               "name": "KeyVaultName",
               "value": "[parameters('KeyVaultName')]"
+            },
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip"
             }
           ]
         }
