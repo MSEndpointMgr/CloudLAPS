@@ -137,3 +137,31 @@ resource azureFunction 'Microsoft.Web/sites@2020-12-01' = {
   }
   tags: Tags
 }
+
+// Create Key Vault
+resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
+  name: KeyVaultName
+  location: resourceGroup().location
+  properties: {
+    enabledForDeployment: false
+    enabledForTemplateDeployment: false
+    enabledForDiskEncryption: false
+    tenantId: subscription().tenantId
+    accessPolicies: [
+      {
+        tenantId: azureFunction.identity.tenantId
+        objectId: azureFunction.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+            'set'
+          ]
+        }
+      }
+    ]
+    sku: {
+      name: 'standard'
+      family: 'A'
+    }
+  }
+}
