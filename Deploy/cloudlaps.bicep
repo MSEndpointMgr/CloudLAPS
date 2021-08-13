@@ -161,34 +161,6 @@ resource azureFunction 'Microsoft.Web/sites@2020-12-01' = {
   tags: Tags
 }
 
-// Create Key Vault
-resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
-  name: KeyVaultName
-  location: resourceGroup().location
-  properties: {
-    enabledForDeployment: false
-    enabledForTemplateDeployment: false
-    enabledForDiskEncryption: false
-    tenantId: subscription().tenantId
-    accessPolicies: [
-      {
-        tenantId: azureFunction.identity.tenantId
-        objectId: azureFunction.identity.principalId
-        permissions: {
-          secrets: [
-            'get'
-            'set'
-          ]
-        }
-      }
-    ]
-    sku: {
-      name: 'standard'
-      family: 'A'
-    }
-  }
-}
-
 // Create Log Analytics workspace
 resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
   name: LogAnalyticsWorkspaceName
@@ -225,7 +197,7 @@ resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-p
 }
 
 // Create app service for CloudLAPS portal
-resource AppService 'Microsoft.Web/sites@2020-06-01' = {
+resource PortalAppService 'Microsoft.Web/sites@2020-06-01' = {
   name: WebSiteName
   location: resourceGroup().location
   identity: {
@@ -236,33 +208,77 @@ resource AppService 'Microsoft.Web/sites@2020-06-01' = {
     siteConfig: {
       netFrameworkVersion: 'v4.0'
       alwaysOn: true
-      appSettings: [
-        {
-          name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: '1'
-        }
-        {
-          name: 'AzureAd:TenantId'
-          value: subscription().tenantId
-        }
-        {
-          name: 'AzureAd:ClientId'
-          value: ApplicationID
-        }
-        {
-          name: 'KeyVault:ClientId'
-          value: ApplicationID
-        }
-      ]
     }
   }
 }
 
-// Add ZipDeploy for function app
-resource zipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
-  parent: azureFunction
+// Create Key Vault
+resource KeyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
+  name: KeyVaultName
+  location: resourceGroup().location
+  properties: {
+    enabledForDeployment: false
+    enabledForTemplateDeployment: false
+    enabledForDiskEncryption: false
+    tenantId: subscription().tenantId
+    accessPolicies: [
+      {
+        tenantId: azureFunction.identity.tenantId
+        objectId: azureFunction.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+            'set'
+          ]
+        }
+      }
+      {
+        tenantId: PortalAppService.identity.tenantId
+        objectId: PortalAppService.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+    ]
+    sku: {
+      name: 'standard'
+      family: 'A'
+    }
+  }
+}
+
+// Deploy application settings for CloudLAPS Portal
+resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+  name: '${PortalAppService.name}/appsettings'
+  properties: {
+      // Add three settings to enable storing of funcitons keys in keyvault
+      AzureWebJobsSecretStorageKeyVaultName: KeyVault.name
+      WEBSITE_RUN_FROM_PACKAGE: '1'
+      'AzureAd:TenantId': subscription().tenantId
+      'AzureAd:ClientId': ApplicationID
+      'KeyVault:Uri': KeyVault.properties.vaultUri
+      'LogAnalytics:WorkspaceId': LogAnalyticsWorkspace.properties.customerId
+      'LogAnalytics:SharedKey': LogAnalyticsWorkspace.listKeys().primarySharedKey
+      'LogAnalytics:LogType': 'CloudLAPSAudit'
+  }
+}
+
+// Add ZipDeploy for Function App
+resource FunctionAppZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
+    parent: azureFunction
+    name: 'ZipDeploy'
+    properties: {
+        packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip'
+    }
+}
+
+// Add ZipDeploy for Function App
+resource PortalZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
+  parent: PortalAppService
   name: 'ZipDeploy'
   properties: {
-      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip'
+      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-Portal1.0.0.zip'
   }
 }

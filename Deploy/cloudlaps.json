@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "3534977922765388665"
+      "templateHash": "2775585517488042955"
     }
   },
   "parameters": {
@@ -195,37 +195,6 @@
       ]
     },
     {
-      "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2019-09-01",
-      "name": "[parameters('KeyVaultName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "enabledForDeployment": false,
-        "enabledForTemplateDeployment": false,
-        "enabledForDiskEncryption": false,
-        "tenantId": "[subscription().tenantId]",
-        "accessPolicies": [
-          {
-            "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.tenantId]",
-            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.principalId]",
-            "permissions": {
-              "secrets": [
-                "get",
-                "set"
-              ]
-            }
-          }
-        ],
-        "sku": {
-          "name": "standard",
-          "family": "A"
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]"
-      ]
-    },
-    {
       "type": "Microsoft.OperationalInsights/workspaces",
       "apiVersion": "2020-10-01",
       "name": "[parameters('LogAnalyticsWorkspaceName')]",
@@ -270,29 +239,72 @@
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('PortalAppServicePlanName'))]",
         "siteConfig": {
           "netFrameworkVersion": "v4.0",
-          "alwaysOn": true,
-          "appSettings": [
-            {
-              "name": "WEBSITE_RUN_FROM_PACKAGE",
-              "value": "1"
-            },
-            {
-              "name": "AzureAd:TenantId",
-              "value": "[subscription().tenantId]"
-            },
-            {
-              "name": "AzureAd:ClientId",
-              "value": "[parameters('ApplicationID')]"
-            },
-            {
-              "name": "KeyVault:ClientId",
-              "value": "[parameters('ApplicationID')]"
-            }
-          ]
+          "alwaysOn": true
         }
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('PortalAppServicePlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2019-09-01",
+      "name": "[parameters('KeyVaultName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "enabledForDeployment": false,
+        "enabledForTemplateDeployment": false,
+        "enabledForDiskEncryption": false,
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "get",
+                "set"
+              ]
+            }
+          },
+          {
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', variables('WebSiteName')), '2020-06-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('WebSiteName')), '2020-06-01', 'full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "get"
+              ]
+            }
+          }
+        ],
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('WebSiteName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/appsettings', variables('WebSiteName'))]",
+      "properties": {
+        "AzureWebJobsSecretStorageKeyVaultName": "[parameters('KeyVaultName')]",
+        "WEBSITE_RUN_FROM_PACKAGE": "1",
+        "AzureAd:TenantId": "[subscription().tenantId]",
+        "AzureAd:ClientId": "[parameters('ApplicationID')]",
+        "KeyVault:Uri": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName'))).vaultUri]",
+        "LogAnalytics:WorkspaceId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName'))).customerId]",
+        "LogAnalytics:SharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]",
+        "LogAnalytics:LogType": "CloudLAPSAudit"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName'))]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('WebSiteName'))]"
       ]
     },
     {
@@ -304,6 +316,17 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/extensions",
+      "apiVersion": "2015-08-01",
+      "name": "[format('{0}/{1}', variables('WebSiteName'), 'ZipDeploy')]",
+      "properties": {
+        "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-Portal1.0.0.zip"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('WebSiteName'))]"
       ]
     }
   ]
