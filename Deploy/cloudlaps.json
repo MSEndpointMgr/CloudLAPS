@@ -1,0 +1,310 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "3534977922765388665"
+    }
+  },
+  "parameters": {
+    "ApplicationID": {
+      "type": "string"
+    },
+    "FunctionAppName": {
+      "type": "string"
+    },
+    "FunctionAppServicePlanSKU": {
+      "type": "string",
+      "defaultValue": "EP1",
+      "allowedValues": [
+        "Y1",
+        "EP1",
+        "EP2",
+        "EP3"
+      ]
+    },
+    "PortalWebAppName": {
+      "type": "string"
+    },
+    "PortalAppServicePlanSKU": {
+      "type": "string",
+      "defaultValue": "S1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "P1V2",
+        "P1V3",
+        "P2V2",
+        "P2V3",
+        "P3V2",
+        "P3V3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3"
+      ]
+    },
+    "KeyVaultName": {
+      "type": "string"
+    },
+    "LogAnalyticsWorkspaceName": {
+      "type": "string"
+    },
+    "Tags": {
+      "type": "object",
+      "defaultValue": {}
+    }
+  },
+  "functions": [],
+  "variables": {
+    "UniqueString": "[uniqueString(resourceGroup().id)]",
+    "FunctionAppNameNoDash": "[replace(parameters('FunctionAppName'), '-', '')]",
+    "StorageAccountName": "[toLower(format('{0}{1}sa', take(variables('FunctionAppNameNoDash'), 17), take(variables('UniqueString'), 5)))]",
+    "FunctionAppServicePlanName": "[format('{0}-Plan', parameters('FunctionAppName'))]",
+    "PortalAppServicePlanName": "[toLower(format('{0}-plan', parameters('PortalWebAppName')))]",
+    "WebSiteName": "[toLower(format('{0}-webapp', parameters('PortalWebAppName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('StorageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "accessTier": "Hot",
+        "allowBlobPublicAccess": false,
+        "minimumTlsVersion": "TLS1_2",
+        "allowSharedKeyAccess": true
+      },
+      "tags": "[parameters('Tags')]"
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2021-01-15",
+      "name": "[variables('FunctionAppServicePlanName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "Windows",
+      "sku": {
+        "name": "[parameters('FunctionAppServicePlanSKU')]"
+      },
+      "tags": "[parameters('Tags')]"
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('FunctionAppName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      },
+      "tags": "[union(parameters('Tags'), createObject(format('hidden-link:{0}', resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))), 'Resource'))]"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('FunctionAppName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "functionapp",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('FunctionAppServicePlanName'))]",
+        "containerSize": 1536,
+        "siteConfig": {
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "powerShellVersion": "~7",
+          "scmType": "None",
+          "appSettings": [
+            {
+              "name": "AzureWebJobsDashboard",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', variables('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName')), '2021-02-01').keys[0].value)]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', variables('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName')), '2021-02-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', variables('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName')), '2021-02-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower('CloudLAPS')]"
+            },
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "1"
+            },
+            {
+              "name": "AzureWebJobsDisableHomepage",
+              "value": "true"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_PROCESS_COUNT",
+              "value": "3"
+            },
+            {
+              "name": "PSWorkerInProcConcurrencyUpperBound",
+              "value": "10"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('FunctionAppName')), '2020-02-02-preview').InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('FunctionAppName')), '2020-02-02-preview').ConnectionString]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "powershell"
+            },
+            {
+              "name": "UpdateFrequencyDays",
+              "value": "3"
+            },
+            {
+              "name": "KeyVaultName",
+              "value": "[parameters('KeyVaultName')]"
+            }
+          ]
+        }
+      },
+      "tags": "[parameters('Tags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('FunctionAppServicePlanName'))]",
+        "[resourceId('Microsoft.Insights/components', parameters('FunctionAppName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2019-09-01",
+      "name": "[parameters('KeyVaultName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "enabledForDeployment": false,
+        "enabledForTemplateDeployment": false,
+        "enabledForDiskEncryption": false,
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "get",
+                "set"
+              ]
+            }
+          }
+        ],
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2020-10-01",
+      "name": "[parameters('LogAnalyticsWorkspaceName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "name": "Free"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2021-01-15",
+      "name": "[variables('PortalAppServicePlanName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "Windows",
+      "sku": {
+        "name": "[parameters('PortalAppServicePlanSKU')]"
+      },
+      "tags": "[parameters('Tags')]"
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('PortalWebAppName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      },
+      "tags": "[union(parameters('Tags'), createObject(format('hidden-link:{0}', resourceId('Microsoft.Web/sites', parameters('PortalWebAppName'))), 'Resource'))]"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('WebSiteName')]",
+      "location": "[resourceGroup().location]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('PortalAppServicePlanName'))]",
+        "siteConfig": {
+          "netFrameworkVersion": "v4.0",
+          "alwaysOn": true,
+          "appSettings": [
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "1"
+            },
+            {
+              "name": "AzureAd:TenantId",
+              "value": "[subscription().tenantId]"
+            },
+            {
+              "name": "AzureAd:ClientId",
+              "value": "[parameters('ApplicationID')]"
+            },
+            {
+              "name": "KeyVault:ClientId",
+              "value": "[parameters('ApplicationID')]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('PortalAppServicePlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/extensions",
+      "apiVersion": "2015-08-01",
+      "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'ZipDeploy')]",
+      "properties": {
+        "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]"
+      ]
+    }
+  ]
+}
