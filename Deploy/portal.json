@@ -1,0 +1,89 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.613.9944",
+      "templateHash": "17864682285573773559"
+    }
+  },
+  "parameters": {
+    "WebAppName": {
+      "type": "string"
+    },
+    "AppServicePlanSKU": {
+      "type": "string",
+      "defaultValue": "S1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "P1V2",
+        "P1V3",
+        "P2V2",
+        "P2V3",
+        "P3V2",
+        "P3V3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3"
+      ]
+    },
+    "Tags": {
+      "type": "object",
+      "defaultValue": {}
+    }
+  },
+  "functions": [],
+  "variables": {
+    "AppServicePlanName": "[toLower(format('{0}-plan', parameters('WebAppName')))]",
+    "WebSiteName": "[toLower(format('{0}-webapp', parameters('WebAppName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2021-01-15",
+      "name": "[variables('AppServicePlanName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "Windows",
+      "sku": {
+        "name": "[parameters('AppServicePlanSKU')]"
+      },
+      "tags": "[parameters('Tags')]"
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02-preview",
+      "name": "[parameters('WebAppName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      },
+      "tags": "[union(parameters('Tags'), createObject(format('hidden-link:{0}', resourceId('Microsoft.Web/sites', parameters('WebAppName'))), 'Resource'))]"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('WebSiteName')]",
+      "location": "[resourceGroup().location]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('AppServicePlanName'))]",
+        "siteConfig": {
+          "netFrameworkVersion": "v5.0",
+          "alwaysOn": true
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('AppServicePlanName'))]"
+      ]
+    }
+  ]
+}
