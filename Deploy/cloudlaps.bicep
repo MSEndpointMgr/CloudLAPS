@@ -1,4 +1,5 @@
 // Define parameters
+@description('App registration application identifier')
 param ApplicationID string
 param FunctionAppName string
 @allowed([
@@ -34,9 +35,9 @@ param Tags object = {}
 // Define variables
 var UniqueString = uniqueString(resourceGroup().id)
 var FunctionAppNameNoDash = replace(FunctionAppName, '-', '')
-var StorageAccountName = toLower('${take(FunctionAppNameNoDash, 17)}${take(UniqueString, 5)}sa')
-var FunctionAppServicePlanName = '${FunctionAppName}-Plan'
-var PortalAppServicePlanName = toLower('${PortalWebAppName}-plan')
+var StorageAccountName = toLower('${take(FunctionAppNameNoDash, 17)}${take(UniqueString, 5)}-sa')
+var FunctionAppServicePlanName = '${FunctionAppName}-fa-plan'
+var PortalAppServicePlanName = toLower('${PortalWebAppName}-wa-plan')
 var WebSiteName = toLower('${PortalWebAppName}-webapp')
 
 // Create storage account for Function App

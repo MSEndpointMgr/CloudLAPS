@@ -5,12 +5,15 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "2775585517488042955"
+      "templateHash": "7889157092448304351"
     }
   },
   "parameters": {
     "ApplicationID": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "App registration application identifier"
+      }
     },
     "FunctionAppName": {
       "type": "string"
@@ -64,9 +67,9 @@
   "variables": {
     "UniqueString": "[uniqueString(resourceGroup().id)]",
     "FunctionAppNameNoDash": "[replace(parameters('FunctionAppName'), '-', '')]",
-    "StorageAccountName": "[toLower(format('{0}{1}sa', take(variables('FunctionAppNameNoDash'), 17), take(variables('UniqueString'), 5)))]",
-    "FunctionAppServicePlanName": "[format('{0}-Plan', parameters('FunctionAppName'))]",
-    "PortalAppServicePlanName": "[toLower(format('{0}-plan', parameters('PortalWebAppName')))]",
+    "StorageAccountName": "[toLower(format('{0}{1}-sa', take(variables('FunctionAppNameNoDash'), 17), take(variables('UniqueString'), 5)))]",
+    "FunctionAppServicePlanName": "[format('{0}-fa-plan', parameters('FunctionAppName'))]",
+    "PortalAppServicePlanName": "[toLower(format('{0}-wa-plan', parameters('PortalWebAppName')))]",
     "WebSiteName": "[toLower(format('{0}-webapp', parameters('PortalWebAppName')))]"
   },
   "resources": [
