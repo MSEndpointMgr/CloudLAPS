@@ -35,10 +35,12 @@ param Tags object = {}
 // Define variables
 var UniqueString = uniqueString(resourceGroup().id)
 var FunctionAppNameNoDash = replace(FunctionAppName, '-', '')
+var PortalWebAppNameNoDash = replace(PortalWebAppName, '-', '')
 var StorageAccountName = toLower('${take(FunctionAppNameNoDash, 17)}${take(UniqueString, 5)}-sa')
 var FunctionAppServicePlanName = '${FunctionAppName}-fa-plan'
 var PortalAppServicePlanName = toLower('${PortalWebAppName}-wa-plan')
-var WebSiteName = toLower('${PortalWebAppName}-webapp')
+var FunctionAppInsightsName = '${FunctionAppName}-fa-ai'
+var PortalAppInsightsName = '${FunctionAppName}-wa-ai'
 
 // Create storage account for Function App
 resource storageaccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
@@ -71,20 +73,19 @@ resource appserviceplan 'Microsoft.Web/serverfarms@2021-01-15' = {
 
 // Create application insights for Function App
 resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' = {
-  name: FunctionAppName
+  name: FunctionAppInsightsName
   location: resourceGroup().location
   kind: 'web'
   properties: {
     Application_Type: 'web'
   }
   tags: union(Tags, {
-    'hidden-link:${resourceId('Microsoft.Web/sites', FunctionAppName)}': 'Resource'
+    'hidden-link:${resourceId('Microsoft.Web/sites', FunctionAppInsightsName)}': 'Resource'
   })
 }
 
-
 // Create function app
-resource azureFunction 'Microsoft.Web/sites@2020-12-01' = {
+resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
   name: FunctionAppName
   location: resourceGroup().location
   kind: 'functionapp'
@@ -186,7 +187,7 @@ resource AppServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
 
 // Create application insights for CloudLAPS portal
 resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' = {
-  name: PortalWebAppName
+  name: PortalAppInsightsName
   location: resourceGroup().location
   kind: 'web'
   properties: {
@@ -199,7 +200,7 @@ resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-p
 
 // Create app service for CloudLAPS portal
 resource PortalAppService 'Microsoft.Web/sites@2020-06-01' = {
-  name: WebSiteName
+  name: PortalWebAppNameNoDash
   location: resourceGroup().location
   identity: {
     type: 'SystemAssigned'
@@ -224,8 +225,8 @@ resource KeyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
     tenantId: subscription().tenantId
     accessPolicies: [
       {
-        tenantId: azureFunction.identity.tenantId
-        objectId: azureFunction.identity.principalId
+        tenantId: FunctionApp.identity.tenantId
+        objectId: FunctionApp.identity.principalId
         permissions: {
           secrets: [
             'get'
@@ -268,7 +269,7 @@ resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
 
 // Add ZipDeploy for Function App
 resource FunctionAppZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
-    parent: azureFunction
+    parent: FunctionApp
     name: 'ZipDeploy'
     properties: {
         packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip'

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "7889157092448304351"
+      "templateHash": "3352116423808147166"
     }
   },
   "parameters": {
@@ -67,10 +67,12 @@
   "variables": {
     "UniqueString": "[uniqueString(resourceGroup().id)]",
     "FunctionAppNameNoDash": "[replace(parameters('FunctionAppName'), '-', '')]",
+    "PortalWebAppNameNoDash": "[replace(parameters('PortalWebAppName'), '-', '')]",
     "StorageAccountName": "[toLower(format('{0}{1}-sa', take(variables('FunctionAppNameNoDash'), 17), take(variables('UniqueString'), 5)))]",
     "FunctionAppServicePlanName": "[format('{0}-fa-plan', parameters('FunctionAppName'))]",
     "PortalAppServicePlanName": "[toLower(format('{0}-wa-plan', parameters('PortalWebAppName')))]",
-    "WebSiteName": "[toLower(format('{0}-webapp', parameters('PortalWebAppName')))]"
+    "FunctionAppInsightsName": "[format('{0}-fa-ai', parameters('FunctionAppName'))]",
+    "PortalAppInsightsName": "[format('{0}-wa-ai', parameters('FunctionAppName'))]"
   },
   "resources": [
     {
@@ -105,13 +107,13 @@
     {
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02-preview",
-      "name": "[parameters('FunctionAppName')]",
+      "name": "[variables('FunctionAppInsightsName')]",
       "location": "[resourceGroup().location]",
       "kind": "web",
       "properties": {
         "Application_Type": "web"
       },
-      "tags": "[union(parameters('Tags'), createObject(format('hidden-link:{0}', resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))), 'Resource'))]"
+      "tags": "[union(parameters('Tags'), createObject(format('hidden-link:{0}', resourceId('Microsoft.Web/sites', variables('FunctionAppInsightsName'))), 'Resource'))]"
     },
     {
       "type": "Microsoft.Web/sites",
@@ -169,11 +171,11 @@
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('FunctionAppName')), '2020-02-02-preview').InstrumentationKey]"
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').InstrumentationKey]"
             },
             {
               "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-              "value": "[reference(resourceId('Microsoft.Insights/components', parameters('FunctionAppName')), '2020-02-02-preview').ConnectionString]"
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').ConnectionString]"
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -193,7 +195,7 @@
       "tags": "[parameters('Tags')]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', variables('FunctionAppServicePlanName'))]",
-        "[resourceId('Microsoft.Insights/components', parameters('FunctionAppName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]"
       ]
     },
@@ -222,7 +224,7 @@
     {
       "type": "Microsoft.Insights/components",
       "apiVersion": "2020-02-02-preview",
-      "name": "[parameters('PortalWebAppName')]",
+      "name": "[variables('PortalAppInsightsName')]",
       "location": "[resourceGroup().location]",
       "kind": "web",
       "properties": {
@@ -233,7 +235,7 @@
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2020-06-01",
-      "name": "[variables('WebSiteName')]",
+      "name": "[variables('PortalWebAppNameNoDash')]",
       "location": "[resourceGroup().location]",
       "identity": {
         "type": "SystemAssigned"
@@ -271,8 +273,8 @@
             }
           },
           {
-            "tenantId": "[reference(resourceId('Microsoft.Web/sites', variables('WebSiteName')), '2020-06-01', 'full').identity.tenantId]",
-            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('WebSiteName')), '2020-06-01', 'full').identity.principalId]",
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2020-06-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2020-06-01', 'full').identity.principalId]",
             "permissions": {
               "secrets": [
                 "get"
@@ -287,13 +289,13 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]",
-        "[resourceId('Microsoft.Web/sites', variables('WebSiteName'))]"
+        "[resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash'))]"
       ]
     },
     {
       "type": "Microsoft.Web/sites/config",
       "apiVersion": "2020-06-01",
-      "name": "[format('{0}/appsettings', variables('WebSiteName'))]",
+      "name": "[format('{0}/appsettings', variables('PortalWebAppNameNoDash'))]",
       "properties": {
         "AzureWebJobsSecretStorageKeyVaultName": "[parameters('KeyVaultName')]",
         "WEBSITE_RUN_FROM_PACKAGE": "1",
@@ -307,7 +309,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName'))]",
         "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName'))]",
-        "[resourceId('Microsoft.Web/sites', variables('WebSiteName'))]"
+        "[resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash'))]"
       ]
     },
     {
@@ -324,12 +326,12 @@
     {
       "type": "Microsoft.Web/sites/extensions",
       "apiVersion": "2015-08-01",
-      "name": "[format('{0}/{1}', variables('WebSiteName'), 'ZipDeploy')]",
+      "name": "[format('{0}/{1}', variables('PortalWebAppNameNoDash'), 'ZipDeploy')]",
       "properties": {
         "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-Portal1.0.0.zip"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('WebSiteName'))]"
+        "[resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash'))]"
       ]
     }
   ]
