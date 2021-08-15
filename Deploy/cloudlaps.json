@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "3352116423808147166"
+      "templateHash": "16809127375251922256"
     }
   },
   "parameters": {
@@ -68,7 +68,7 @@
     "UniqueString": "[uniqueString(resourceGroup().id)]",
     "FunctionAppNameNoDash": "[replace(parameters('FunctionAppName'), '-', '')]",
     "PortalWebAppNameNoDash": "[replace(parameters('PortalWebAppName'), '-', '')]",
-    "StorageAccountName": "[toLower(format('{0}{1}-sa', take(variables('FunctionAppNameNoDash'), 17), take(variables('UniqueString'), 5)))]",
+    "StorageAccountName": "[toLower(format('{0}{1}sa', take(variables('FunctionAppNameNoDash'), 17), take(variables('UniqueString'), 5)))]",
     "FunctionAppServicePlanName": "[format('{0}-fa-plan', parameters('FunctionAppName'))]",
     "PortalAppServicePlanName": "[toLower(format('{0}-wa-plan', parameters('PortalWebAppName')))]",
     "FunctionAppInsightsName": "[format('{0}-fa-ai', parameters('FunctionAppName'))]",
