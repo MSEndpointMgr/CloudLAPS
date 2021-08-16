@@ -277,7 +277,7 @@ resource FunctionAppZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
     }
 }
 
-// Add ZipDeploy for Function App
+// Add ZipDeploy for CloudLAPS Portal
 resource PortalZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
   parent: PortalAppService
   name: 'ZipDeploy'
