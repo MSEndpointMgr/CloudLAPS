@@ -257,7 +257,8 @@ resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   properties: {
       // Add three settings to enable storing of funcitons keys in keyvault
       AzureWebJobsSecretStorageKeyVaultName: KeyVault.name
-      WEBSITE_RUN_FROM_PACKAGE: '1'
+      APPLICATIONINSIGHTS_CONNECTION_STRING: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
+      APPINSIGHTS_INSTRUMENTATIONKEY: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
       'AzureAd:TenantId': subscription().tenantId
       'AzureAd:ClientId': ApplicationID
       'KeyVault:Uri': KeyVault.properties.vaultUri
