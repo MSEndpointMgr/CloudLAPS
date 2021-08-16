@@ -1,6 +1,7 @@
 // Define parameters
-@description('App registration application identifier')
+@description('Provide the App registration application identifier.')
 param ApplicationID string
+@description('Provide a name for the Function App that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen.')
 param FunctionAppName string
 @allowed([
     'Y1'
@@ -8,7 +9,9 @@ param FunctionAppName string
     'EP2'
     'EP3'
 ])
+@description('Select the desired App Service Plan of the Function App. Select Y1 for free consumption based deployment.')
 param FunctionAppServicePlanSKU string = 'EP1'
+@description('Provide a name for the portal website that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen.')
 param PortalWebAppName string
 @allowed([
   'F1'
@@ -27,9 +30,13 @@ param PortalWebAppName string
   'P2'
   'P3'
 ])
+@description('Select the desired App Service Plan for the portal website. Select B1, D1 or F1 SKUs for minimum cost. Recommended SKU for optimal performance and cost is S1.')
 param PortalAppServicePlanSKU string = 'S1'
+@description('Provide a name for the Key Vault. Name must be a 3-24 character string, containing only 0-9, a-z, A-Z, and - characters.')
 param KeyVaultName string
+@description('Provide a name for the Log Analytics workspace.')
 param LogAnalyticsWorkspaceName string
+@description('Provide any tags required by your organization (optional)')
 param Tags object = {}
 
 // Define variables

@@ -5,22 +5,28 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "9382547529018600958"
+      "templateHash": "6798916172053710945"
     }
   },
   "parameters": {
     "ApplicationID": {
       "type": "string",
       "metadata": {
-        "description": "App registration application identifier"
+        "description": "Provide the App registration application identifier."
       }
     },
     "FunctionAppName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "Provide a name for the Function App that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen."
+      }
     },
     "FunctionAppServicePlanSKU": {
       "type": "string",
       "defaultValue": "EP1",
+      "metadata": {
+        "description": "Select the desired App Service Plan of the Function App. Select Y1 for free consumption based deployment."
+      },
       "allowedValues": [
         "Y1",
         "EP1",
@@ -29,11 +35,17 @@
       ]
     },
     "PortalWebAppName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "Provide a name for the portal website that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen."
+      }
     },
     "PortalAppServicePlanSKU": {
       "type": "string",
       "defaultValue": "S1",
+      "metadata": {
+        "description": "Select the desired App Service Plan for the portal website. Select B1, D1 or F1 SKUs for minimum cost. Recommended SKU for optimal performance and cost is S1."
+      },
       "allowedValues": [
         "F1",
         "D1",
@@ -53,14 +65,23 @@
       ]
     },
     "KeyVaultName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "Provide a name for the Key Vault. Name must be a 3-24 character string, containing only 0-9, a-z, A-Z, and - characters."
+      }
     },
     "LogAnalyticsWorkspaceName": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "Provide a name for the Log Analytics workspace."
+      }
     },
     "Tags": {
       "type": "object",
-      "defaultValue": {}
+      "defaultValue": {},
+      "metadata": {
+        "description": "Provide any tags required by your organization (optional)"
+      }
     }
   },
   "functions": [],
