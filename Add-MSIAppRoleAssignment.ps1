@@ -1,6 +1,6 @@
 # Assign static variables
 $TenantID = "<Enter Tenant ID>"
-$MSIObjectID = "<Enter Managed System Identity object ID>"
+$MSIObjectID = "<Enter Managed System Identity Object ID>"
 
 # Authenticate against Azure AD, as Global Administrator
 Connect-AzureAD -TenantId $TenantID
