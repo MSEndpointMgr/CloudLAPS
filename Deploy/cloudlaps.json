@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "6798916172053710945"
+      "templateHash": "13624655223543908757"
     }
   },
   "parameters": {
@@ -264,8 +264,13 @@
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('PortalAppServicePlanName'))]",
         "siteConfig": {
-          "netFrameworkVersion": "v4.0",
-          "alwaysOn": true
+          "alwaysOn": true,
+          "metadata": [
+            {
+              "name": "CURRENT_STACK",
+              "value": "dotnetcore"
+            }
+          ]
         }
       },
       "dependsOn": [
