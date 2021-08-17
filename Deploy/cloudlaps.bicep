@@ -215,7 +215,6 @@ resource PortalAppService 'Microsoft.Web/sites@2020-06-01' = {
   properties: {
     serverFarmId: AppServicePlan.id
     siteConfig: {
-      //netFrameworkVersion: 'v4.0'
       alwaysOn: true
       metadata: [
         {
