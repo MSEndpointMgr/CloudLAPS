@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "13624655223543908757"
+      "templateHash": "5686472582748364252"
     }
   },
   "parameters": {
@@ -68,7 +68,9 @@
       "type": "string",
       "metadata": {
         "description": "Provide a name for the Key Vault. Name must be a 3-24 character string, containing only 0-9, a-z, A-Z, and - characters."
-      }
+      },
+      "maxLength": 24,
+      "minLength": 3
     },
     "LogAnalyticsWorkspaceName": {
       "type": "string",

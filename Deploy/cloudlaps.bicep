@@ -32,8 +32,16 @@ param PortalWebAppName string
 ])
 @description('Select the desired App Service Plan for the portal website. Select B1, D1 or F1 SKUs for minimum cost. Recommended SKU for optimal performance and cost is S1.')
 param PortalAppServicePlanSKU string = 'S1'
+@minLength(3)
+@maxLength(24)
 @description('Provide a name for the Key Vault. Name must be a 3-24 character string, containing only 0-9, a-z, A-Z, and - characters.')
 param KeyVaultName string
+//@allowed([
+//  'Create new'
+//  'Use existing'
+//])
+//@description('Select whether to use an existing workspace or create a new')
+//param LogAnalyticsWorkspaceOption string
 @description('Provide a name for the Log Analytics workspace.')
 param LogAnalyticsWorkspaceName string
 @description('Provide any tags required by your organization (optional)')
@@ -267,7 +275,6 @@ resource KeyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
 resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   name: '${PortalAppService.name}/appsettings'
   properties: {
-      // Add three settings to enable storing of funcitons keys in keyvault
       AzureWebJobsSecretStorageKeyVaultName: KeyVault.name
       APPLICATIONINSIGHTS_CONNECTION_STRING: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
       APPINSIGHTS_INSTRUMENTATIONKEY: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
