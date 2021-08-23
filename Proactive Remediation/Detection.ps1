@@ -33,13 +33,4 @@ Process {
             Write-Warning -Message "Failed to create new event log. Error message: $($_.Exception.Message)"
         }
     }
-
-    if ($env:COMPUTERNAME -match "DESKTOP-|LAPTOP-|WIN-") {
-        # Do not trigger remediation script if computer has not been renamed
-        exit 0
-    }
-    else {
-        # Trigger remediation script
-        exit 1
-    }
 }
