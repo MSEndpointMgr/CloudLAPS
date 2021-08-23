@@ -1,16 +1,17 @@
 // Define parameters
 @description('Provide the App registration application identifier.')
 param ApplicationID string
-@description('Provide a name for the Function App that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen.')
+@description('Provide a name for the Function App that consists of alphanumerics. Name must be globally unique in Azure and cannot start or end with a hyphen.')
 param FunctionAppName string
 @allowed([
-    'EP1'
-    'EP2'
-    'EP3'
+  'Y1'
+  'EP1'
+  'EP2'
+  'EP3'
 ])
 @description('Select the desired App Service Plan of the Function App. Select Y1 for free consumption based deployment.')
 param FunctionAppServicePlanSKU string = 'EP1'
-@description('Provide a name for the portal website that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen.')
+@description('Provide a name for the portal website that consists of alphanumerics. Name must be globally unique in Azure and cannot start or end with a hyphen.')
 param PortalWebAppName string
 @allowed([
   'B1'
@@ -31,7 +32,7 @@ param PortalWebAppName string
 param PortalAppServicePlanSKU string = 'S1'
 @minLength(3)
 @maxLength(24)
-@description('Provide a name for the Key Vault. Name must be a 3-24 character string, containing only 0-9, a-z, A-Z, and - characters.')
+@description('Provide a name for the Key Vault. Name must be globally unique in Azure and between 3-24 characters, containing only 0-9, a-z, A-Z, and - characters.')
 param KeyVaultName string
 @description('Provide a name for the Log Analytics workspace.')
 param LogAnalyticsWorkspaceName string

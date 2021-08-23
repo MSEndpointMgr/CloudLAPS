@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "8874859173040481536"
+      "templateHash": "59039299192462259"
     }
   },
   "parameters": {
@@ -18,7 +18,7 @@
     "FunctionAppName": {
       "type": "string",
       "metadata": {
-        "description": "Provide a name for the Function App that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen."
+        "description": "Provide a name for the Function App that consists of alphanumerics. Name must be globally unique in Azure and cannot start or end with a hyphen."
       }
     },
     "FunctionAppServicePlanSKU": {
@@ -28,6 +28,7 @@
         "description": "Select the desired App Service Plan of the Function App. Select Y1 for free consumption based deployment."
       },
       "allowedValues": [
+        "Y1",
         "EP1",
         "EP2",
         "EP3"
@@ -36,7 +37,7 @@
     "PortalWebAppName": {
       "type": "string",
       "metadata": {
-        "description": "Provide a name for the portal website that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen."
+        "description": "Provide a name for the portal website that consists of alphanumerics. Name must be globally unique in Azure and cannot start or end with a hyphen."
       }
     },
     "PortalAppServicePlanSKU": {
@@ -64,7 +65,7 @@
     "KeyVaultName": {
       "type": "string",
       "metadata": {
-        "description": "Provide a name for the Key Vault. Name must be a 3-24 character string, containing only 0-9, a-z, A-Z, and - characters."
+        "description": "Provide a name for the Key Vault. Name must be globally unique in Azure and between 3-24 characters, containing only 0-9, a-z, A-Z, and - characters."
       },
       "maxLength": 24,
       "minLength": 3
