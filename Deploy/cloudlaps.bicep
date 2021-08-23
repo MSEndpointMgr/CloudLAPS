@@ -35,12 +35,6 @@ param PortalAppServicePlanSKU string = 'S1'
 @maxLength(24)
 @description('Provide a name for the Key Vault. Name must be a 3-24 character string, containing only 0-9, a-z, A-Z, and - characters.')
 param KeyVaultName string
-//@allowed([
-//  'Create new'
-//  'Use existing'
-//])
-//@description('Select whether to use an existing workspace or create a new')
-//param LogAnalyticsWorkspaceOption string
 @description('Provide a name for the Log Analytics workspace.')
 param LogAnalyticsWorkspaceName string
 @description('Provide any tags required by your organization (optional)')
