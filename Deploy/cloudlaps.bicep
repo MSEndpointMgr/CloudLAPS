@@ -13,8 +13,6 @@ param FunctionAppServicePlanSKU string = 'EP1'
 @description('Provide a name for the portal website that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen.')
 param PortalWebAppName string
 @allowed([
-  'F1'
-  'D1'
   'B1'
   'P1V2'
   'P1V3'
@@ -29,7 +27,7 @@ param PortalWebAppName string
   'P2'
   'P3'
 ])
-@description('Select the desired App Service Plan for the portal website. Select B1, D1 or F1 SKUs for minimum cost. Recommended SKU for optimal performance and cost is S1.')
+@description('Select the desired App Service Plan for the portal website. Select B1, SKU for minimum cost. Recommended SKU for optimal performance and cost is S1.')
 param PortalAppServicePlanSKU string = 'S1'
 @minLength(3)
 @maxLength(24)
@@ -43,8 +41,9 @@ param Tags object = {}
 // Define variables
 var UniqueString = uniqueString(resourceGroup().id)
 var FunctionAppNameNoDash = replace(FunctionAppName, '-', '')
+var FunctionAppNameNoDashUnderScore = replace(FunctionAppNameNoDash, '_', '')
 var PortalWebAppNameNoDash = replace(PortalWebAppName, '-', '')
-var StorageAccountName = toLower('${take(FunctionAppNameNoDash, 17)}${take(UniqueString, 5)}sa')
+var StorageAccountName = toLower('${take(FunctionAppNameNoDashUnderScore, 17)}${take(UniqueString, 5)}sa')
 var FunctionAppServicePlanName = '${FunctionAppName}-fa-plan'
 var PortalAppServicePlanName = toLower('${PortalWebAppName}-wa-plan')
 var FunctionAppInsightsName = '${FunctionAppName}-fa-ai'

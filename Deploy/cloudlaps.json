@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "7233921755440891275"
+      "templateHash": "8874859173040481536"
     }
   },
   "parameters": {
@@ -43,11 +43,9 @@
       "type": "string",
       "defaultValue": "S1",
       "metadata": {
-        "description": "Select the desired App Service Plan for the portal website. Select B1, D1 or F1 SKUs for minimum cost. Recommended SKU for optimal performance and cost is S1."
+        "description": "Select the desired App Service Plan for the portal website. Select B1, SKU for minimum cost. Recommended SKU for optimal performance and cost is S1."
       },
       "allowedValues": [
-        "F1",
-        "D1",
         "B1",
         "P1V2",
         "P1V3",
@@ -89,8 +87,9 @@
   "variables": {
     "UniqueString": "[uniqueString(resourceGroup().id)]",
     "FunctionAppNameNoDash": "[replace(parameters('FunctionAppName'), '-', '')]",
+    "FunctionAppNameNoDashUnderScore": "[replace(variables('FunctionAppNameNoDash'), '_', '')]",
     "PortalWebAppNameNoDash": "[replace(parameters('PortalWebAppName'), '-', '')]",
-    "StorageAccountName": "[toLower(format('{0}{1}sa', take(variables('FunctionAppNameNoDash'), 17), take(variables('UniqueString'), 5)))]",
+    "StorageAccountName": "[toLower(format('{0}{1}sa', take(variables('FunctionAppNameNoDashUnderScore'), 17), take(variables('UniqueString'), 5)))]",
     "FunctionAppServicePlanName": "[format('{0}-fa-plan', parameters('FunctionAppName'))]",
     "PortalAppServicePlanName": "[toLower(format('{0}-wa-plan', parameters('PortalWebAppName')))]",
     "FunctionAppInsightsName": "[format('{0}-fa-ai', parameters('FunctionAppName'))]",
