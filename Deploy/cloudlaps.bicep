@@ -175,6 +175,10 @@ resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
           name: 'DebugLogging'
           value: 'False'
         }
+        {
+          name: 'PasswordLength'
+          value: '16'
+        }
       ]
     }
   }

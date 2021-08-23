@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "9790452940470373109"
+      "templateHash": "3393781880287792831"
     }
   },
   "parameters": {
@@ -214,6 +214,10 @@
             {
               "name": "DebugLogging",
               "value": "False"
+            },
+            {
+              "name": "PasswordLength",
+              "value": "16"
             }
           ]
         }
