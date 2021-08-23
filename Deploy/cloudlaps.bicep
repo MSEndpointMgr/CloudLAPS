@@ -179,6 +179,10 @@ resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
           name: 'PasswordLength'
           value: '16'
         }
+        {
+          name: 'PasswordAllowedCharacters'
+          value: 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
+        }
       ]
     }
   }

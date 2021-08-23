@@ -123,6 +123,49 @@ function Get-AzureADDeviceAlternativeSecurityIds {
     }
 }
 
+function New-HashString {
+    <#
+    .SYNOPSIS
+        Compute has from input value and return encoded Base64 string.
+    
+    .DESCRIPTION
+        Compute has from input value and return encoded Base64 string.
+
+    .PARAMETER Value
+        Specify a Base64 encoded value for which a hash will be computed.
+    
+    .NOTES
+        Author:      Nickolaj Andersen
+        Contact:     @NickolajA
+        Created:     2021-08-23
+        Updated:     2021-08-23
+    
+        Version history:
+        1.0.0 - (2021-08-23) Function created
+    #>
+    param(    
+        [parameter(Mandatory = $true, HelpMessage = "Specify a Base64 encoded value for which a hash will be computed.")]
+        [ValidateNotNullOrEmpty()]
+        [string]$Value
+    )
+    Process {
+        # Convert from Base64 string to byte array
+        $DecodedBytes = [System.Convert]::FromBase64String($Value)
+    
+        # Construct a new SHA256Managed object to be used when computing the hash
+        $SHA256Managed = New-Object -TypeName "System.Security.Cryptography.SHA256Managed"
+
+        # Compute the hash
+        [byte[]]$ComputedHash = $SHA256Managed.ComputeHash($DecodedBytes)
+
+        # Convert computed hash to Base64 string
+        $ComputedHashString = [System.Convert]::ToBase64String($ComputedHash)
+
+        # Handle return value
+        return $ComputedHashString
+    }
+}
+
 function Test-AzureADDeviceAlternativeSecurityIds {
     <#
     .SYNOPSIS
@@ -191,7 +234,7 @@ function Test-AzureADDeviceAlternativeSecurityIds {
                 $ComputedHashString = [System.Convert]::ToBase64String($ComputedHash)
 
                 # Validate match
-                if ($ComputedHashString -match $AzureADDeviceAlternativeSecurityIds.PublicKeyHash) {
+                if ($ComputedHashString -like $AzureADDeviceAlternativeSecurityIds.PublicKeyHash) {
                     return $true
                 }
                 else {
@@ -284,9 +327,10 @@ Write-Output -InputObject "Inbound request from IP: $($TriggerMetadata.'$Request
 
 # Read application settings for Key Vault values
 $KeyVaultName = $env:KeyVaultName
-Write-Output -InputObject "Application setting 'KeyVaultName' contains value: $($KeyVaultName)"
-$KeyVaultUpdateFrequencyDays = $env:UpdateFrequencyDays
-Write-Output -InputObject "Application setting 'UpdateFrequencyDays' contains value: $($KeyVaultUpdateFrequencyDays)"
+$KeyVaultUpdateFrequencyDays = if (-not([string]::IsNullOrEmpty($env:UpdateFrequencyDays))) { $env:UpdateFrequencyDays } else { 3 }
+$PasswordLength = if (-not([string]::IsNullOrEmpty($env:PasswordLength))) { $env:PasswordLength } else { 16 }
+$PasswordAllowedCharacters = if (-not([string]::IsNullOrEmpty($env:PasswordAllowedCharacters))) { $env:PasswordAllowedCharacters } else { "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789" }
+$DebugLogging = if (-not([string]::IsNullOrEmpty($env:DebugLogging))) { $env:DebugLogging } else { $false }
 
 # Retrieve authentication token
 $Script:AuthToken = Get-AuthToken
@@ -319,7 +363,12 @@ foreach ($HeaderValidationItem in $HeaderValidationList) {
         }
         else {
             if ($HeaderItem -in @("Signature", "PublicKey")) {
-                Write-Output -InputObject "Header validation succeeded for '$($HeaderItem)' with value: <redacted>"
+                if ($DebugLogging -eq $true) {
+                    Write-Output -InputObject "Header validation succeeded for '$($HeaderItem)' with value: $($HeaderValidationItem[$HeaderItem])"
+                }
+                else {
+                    Write-Output -InputObject "Header validation succeeded for '$($HeaderItem)' with value: <redacted>"
+                }
             }
             else {
                 Write-Output -InputObject "Header validation succeeded for '$($HeaderItem)' with value: $($HeaderValidationItem[$HeaderItem])"
@@ -336,11 +385,25 @@ if ($HeaderValidation -eq $true) {
     if ($AzureADDeviceRecord -ne $null) {
         Write-Output -InputObject "Found trusted Azure AD device record with object identifier: $($AzureADDeviceRecord.id)"
 
+        # Get required validation data for debug logging when enabled
+        if ($DebugLogging -eq $true) {
+            $AzureADDeviceAlternativeSecurityIds = Get-AzureADDeviceAlternativeSecurityIds -Key $AzureADDeviceRecord.alternativeSecurityIds.key
+        }
+
         # Validate thumbprint from input request with Azure AD device record's alternativeSecurityIds details
+        if ($DebugLogging -eq $true) {
+            Write-Output -InputObject "ValidatePublicKeyThumbprint: Value from param 'Thumbprint': $($Thumbprint)"
+            Write-Output -InputObject "ValidatePublicKeyThumbprint: Value from AAD device record: $($AzureADDeviceAlternativeSecurityIds.Thumbprint)"
+        }
         if (Test-AzureADDeviceAlternativeSecurityIds -AlternativeSecurityIdKey $AzureADDeviceRecord.alternativeSecurityIds.key -Type "Thumbprint" -Value $Thumbprint) {
             Write-Output -InputObject "Successfully validated certificate thumbprint from inbound request"
 
             # Validate public key hash from input request with Azure AD device record's alternativeSecurityIds details
+            if ($DebugLogging -eq $true) {
+                $ComputedHashString = New-HashString -Value $PublicKey
+                Write-Output -InputObject "ValidatePublicKeyHash: Encoded hash from param 'PublicKey': $($ComputedHashString)"
+                Write-Output -InputObject "ValidatePublicKeyHash: Encoded hash from AAD device record: $($AzureADDeviceAlternativeSecurityIds.PublicKeyHash)"
+            }
             if (Test-AzureADDeviceAlternativeSecurityIds -AlternativeSecurityIdKey $AzureADDeviceRecord.alternativeSecurityIds.key -Type "Hash" -Value $PublicKey) {
                 Write-Output -InputObject "Successfully validated certificate SHA256 hash value from inbound request"
 
@@ -384,7 +447,7 @@ if ($HeaderValidation -eq $true) {
                         # Continue if update of existing secret was allowed or if new should be created
                         if ($KeyVaultSecretUpdateAllowed -eq $true) {
                             # Generate a random password
-                            $Password = Invoke-PasswordGeneration
+                            $Password = Invoke-PasswordGeneration -Length $PasswordLength -AllowedCharacters $PasswordAllowedCharacters
                             $SecretValue = ConvertTo-SecureString -String $Password -AsPlainText -Force
                 
                             # Construct hash-table for Tags property
