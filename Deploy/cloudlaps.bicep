@@ -4,7 +4,6 @@ param ApplicationID string
 @description('Provide a name for the Function App that consists of alphanumerics. Name must be globally unique and cannot start or end with a hyphen.')
 param FunctionAppName string
 @allowed([
-    'Y1'
     'EP1'
     'EP2'
     'EP3'
@@ -171,6 +170,10 @@ resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
         {
           name: 'KeyVaultName'
           value: KeyVaultName
+        }
+        {
+          name: 'DebugLogging'
+          value: 'False'
         }
       ]
     }

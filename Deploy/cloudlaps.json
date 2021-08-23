@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "5686472582748364252"
+      "templateHash": "9790452940470373109"
     }
   },
   "parameters": {
@@ -28,7 +28,6 @@
         "description": "Select the desired App Service Plan of the Function App. Select Y1 for free consumption based deployment."
       },
       "allowedValues": [
-        "Y1",
         "EP1",
         "EP2",
         "EP3"
@@ -211,6 +210,10 @@
             {
               "name": "KeyVaultName",
               "value": "[parameters('KeyVaultName')]"
+            },
+            {
+              "name": "DebugLogging",
+              "value": "False"
             }
           ]
         }
