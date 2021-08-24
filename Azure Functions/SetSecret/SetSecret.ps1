@@ -337,7 +337,10 @@ $Script:AuthToken = Get-AuthToken
 
 # Initate variables
 $StatusCode = [HttpStatusCode]::OK
-$Body = [string]::Empty
+$Body = @{
+    Message = ""
+    Password = ""
+}
 $HeaderValidation = $true
 
 # Assign incoming request properties to variables
@@ -359,7 +362,7 @@ foreach ($HeaderValidationItem in $HeaderValidationList) {
             Write-Warning -Message "Header validation for '$($HeaderItem)' failed, request will not be handled"
             $StatusCode = [HttpStatusCode]::BadRequest
             $HeaderValidation = $false
-            $Body = "Header validation failed"
+            $Body.Message = "Header validation failed"
         }
         else {
             if ($HeaderItem -in @("Signature", "PublicKey")) {
@@ -462,47 +465,50 @@ if ($HeaderValidation -eq $true) {
                                 Write-Output -InputObject "Attempting to commit secret with name '$($SecretName)' to vault"
                                 Set-AzKeyVaultSecret -VaultName $KeyVaultName -Name $SecretName -SecretValue $SecretValue -ContentType $ContentType -Tags $Tags -ErrorAction Stop
                                 Write-Output -InputObject "Successfully committed secret to vault"
-                                $Body = $Password
+                                $StatusCode = [HttpStatusCode]::Created
+                                $Body.Pasword = $Password
                             }
                             catch [System.Exception] {
                                 Write-Warning -Message "Failed to commit key vault secret. Error message: $($_.Exception.Message)"
                                 $StatusCode = [HttpStatusCode]::BadRequest
-                                $Body = "Failed to commit secret to key vault"
+                                $Body.Message = "Failed to commit secret to key vault"
                             }
                         }
                         else {
-                            $StatusCode = [HttpStatusCode]::Forbidden
-                            $Body = "Secret update not allowed"
+                            $StatusCode = [HttpStatusCode]::Accepted
+                            $Body.Message = "Secret valid. No update needed."
+                            $Password = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $SecretName -AsPlainText
+                            $Body.Password = $Password
                         }
                     }
                     else {
                         Write-Output -InputObject "Trusted Azure AD device record validation for inbound request failed, record with deviceId '$($DeviceID)' is disabled"
                         $StatusCode = [HttpStatusCode]::Forbidden
-                        $Body = "Disabled device record"
+                        $Body.Message = "Disabled device record"
                     }
                 }
                 else {
                     Write-Warning -Message "Trusted Azure AD device record validation for inbound request failed, could not validate signed content from client"
                     $StatusCode = [HttpStatusCode]::Forbidden
-                    $Body = "Untrusted request"
+                    $Body.Message = "Untrusted request"
                 }
             }
             else {
                 Write-Warning -Message "Trusted Azure AD device record validation for inbound request failed, could not validate certificate SHA256 hash value"
                 $StatusCode = [HttpStatusCode]::Forbidden
-                $Body = "Untrusted request"
+                $Body.Message = "Untrusted request"
             }
         }
         else {
             Write-Warning -Message "Trusted Azure AD device record validation for inbound request failed, could not validate certificate thumbprint"
             $StatusCode = [HttpStatusCode]::Forbidden
-            $Body = "Untrusted request"
+            $Body.Message = "Untrusted request"
         }
     }
     else {
         Write-Warning -Message "Trusted Azure AD device record validation for inbound request failed, could not find device with deviceId: $($DeviceID)"
         $StatusCode = [HttpStatusCode]::Forbidden
-        $Body = "Untrusted request"
+        $Body.Message = "Untrusted request"
     }
 }
 
