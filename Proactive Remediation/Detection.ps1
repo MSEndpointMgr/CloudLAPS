@@ -33,4 +33,7 @@ Process {
             Write-Warning -Message "Failed to create new event log. Error message: $($_.Exception.Message)"
         }
     }
+
+    # Trigger remediation script
+    exit 1
 }
