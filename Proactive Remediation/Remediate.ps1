@@ -280,12 +280,12 @@ Process {
         Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 11 -Message "CloudLAPS: Calling Azure Function API for password generation and secret update"
         $APIResponse = Invoke-RestMethod -Method "POST" -Uri $URI -Body ($BodyTable | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
 
-        if ([string]::IsNullOrEmpty($APIResponse)) {
+        if ([string]::IsNullOrEmpty($($APIResponse.Password))) {
             Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 13 -Message "CloudLAPS: Retrieved an empty response from Azure Function URL"; $ExitCode = 1
         }
         else {
             # Convert password returned from Azure Function API call to secure string
-            $SecurePassword = ConvertTo-SecureString -String $APIResponse -AsPlainText -Force
+            $SecurePassword = ConvertTo-SecureString -String $APIResponse.Password -AsPlainText -Force
 
             # Check if existing local administrator user account exists
             $LocalAdministratorAccount = Get-LocalUser -Name $LocalAdministratorName -ErrorAction SilentlyContinue
@@ -315,7 +315,7 @@ Process {
                 # Local administrator account already exists, reset password
                 try {
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 30 -Message "CloudLAPS: Local administrator account exists, updating password"
-                    Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -UserMayChangePassword $false -ErrorAction Stop
+                    Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -ErrorAction Stop
                 }
                 catch [System.Exception] {
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 31 -Message "CloudLAPS: Failed to rotate password for '$($LocalAdministratorName)' local user account. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
