@@ -240,7 +240,7 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "sku": {
-          "name": "Free"
+          "name": "pergb2018"
         }
       }
     },
