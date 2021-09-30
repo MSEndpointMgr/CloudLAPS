@@ -76,6 +76,21 @@
         "description": "Provide a name for the Log Analytics workspace."
       }
     },
+    "LogAnalyticsWorkspaceSKU": {
+          "type": "string",
+          "allowedValues": [
+            "pergb2018",
+            "Free",
+            "Standalone",
+            "PerNode",
+            "Standard",
+            "Premium"
+            ],
+          "defaultValue": "pergb2018",
+          "metadata": {
+          "description": "Pricing tier: PerGB2018 or legacy tiers (Free, Standalone, PerNode, Standard or Premium) which are not available to all customers."
+          }
+	},
     "Tags": {
       "type": "object",
       "defaultValue": {},
@@ -240,7 +255,7 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "sku": {
-          "name": "pergb2018"
+          "name": "[parameters('LogAnalyticsWorkspaceSKU')]"
         }
       }
     },
