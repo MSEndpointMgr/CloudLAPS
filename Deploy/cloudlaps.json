@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.613.9944",
-      "templateHash": "59039299192462259"
+      "templateHash": "4762390678151220625"
     }
   },
   "parameters": {
@@ -240,7 +240,7 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "sku": {
-          "name": "Free"
+          "name": "PerGB2018"
         }
       }
     },
