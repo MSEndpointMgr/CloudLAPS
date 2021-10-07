@@ -14,10 +14,11 @@
     Author:      Nickolaj Andersen
     Contact:     @NickolajA
     Created:     2020-09-14
-    Updated:     2020-09-14
+    Updated:     2021-10-07
 
     Version history:
     1.0.0 - (2020-09-14) Script created
+    1.0.1 - (2021-10-07) Updated with output for extended details in MEM portal
 #>
 Process {
     # Functions
@@ -316,6 +317,9 @@ Process {
                 try {
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 30 -Message "CloudLAPS: Local administrator account exists, updating password"
                     Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -UserMayChangePassword $false -ErrorAction Stop
+                    
+                    # Write output for extended details in MEM portal
+                    Write-Output -InputObject "Password rotation completed"
                 }
                 catch [System.Exception] {
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 31 -Message "CloudLAPS: Failed to rotate password for '$($LocalAdministratorName)' local user account. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
@@ -329,12 +333,24 @@ Process {
     catch [System.Exception] {
         switch ($PSItem.Exception.Response.StatusCode) {
             "Forbidden" {
+                # Write output for extended details in MEM portal
+                Write-Output -InputObject "Password rotation not allowed"
+
+                # Write to event log and set exit code
                 Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Warning -EventId 14 -Message "CloudLAPS: Forbidden, password was not allowed to be updated"; $ExitCode = 0
             }
             "BadRequest" {
+                # Write output for extended details in MEM portal
+                Write-Output -InputObject "Password rotation failed"
+
+                # Write to event log and set exit code
                 Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 15 -Message "CloudLAPS: BadRequest, failed to update password"; $ExitCode = 1
             }
             default {
+                # Write output for extended details in MEM portal
+                Write-Output -InputObject "Password rotation failed"
+
+                # Write to event log and set exit code
                 Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 12 -Message "CloudLAPS: Call to Azure Function URI failed. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
             }
         }
