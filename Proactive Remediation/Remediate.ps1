@@ -19,6 +19,7 @@
     Version history:
     1.0.0 - (2020-09-14) Script created
     1.0.1 - (2021-10-07) Updated with output for extended details in MEM portal
+    1.0.2 - (2021-12-17) Add detection of default local admin for different languages
 #>
 Process {
     # Functions
@@ -236,8 +237,15 @@ Process {
         }
     }
 
-    # Define the local administrator user name
-    $LocalAdministratorName = "<Enter the name of the local administrator account>"
+    # Define the local administrator user name on line 247 or select to use default by changing 241 to $true
+    $UseDefaultAdministrator = $false
+    if($UseDefaultAdministrator){
+        $LocalAdministratorName = (Get-LocalUser | Where-Object {$_.SID -like "*-500"}).Name
+        Enable-LocalUser -Name $LocalAdministratorName
+    }
+    else{
+        $LocalAdministratorName = "LocalAdmin"
+    }
 
     # Construct the required URI for the Azure Function URL
     $URI = "<Enter Azure Functions URI>"
