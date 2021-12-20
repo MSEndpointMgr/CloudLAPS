@@ -37,10 +37,9 @@ Process {
             Write-Warning -Message "Failed to create new event log. Error message: $($_.Exception.Message)"
         }
     }
-    if((Get-EventLog -LogName $EventLogName -InstanceId 40)[0].TimeGenerated -ge (Get-Date).AddDays($Delay)){
+    if((Get-Date (Get-EventLog -LogName $EventLogName -InstanceId 40)[0].TimeGenerated).AddDays($Delay) -le (Get-Date)){
         exit 1
     }
-
     # Trigger remediation script
     exit 0
 }
