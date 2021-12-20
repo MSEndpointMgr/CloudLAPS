@@ -25,21 +25,23 @@ Process {
     # Delay for Detection
     $Delay = 30
 
+    $exitcode = 0
     # Create new event log if it doesn't already exist
     $EventLogName = "CloudLAPS-Client"
     $EventLogSource = "CloudLAPS-Client"
     $CloudLAPSEventLog = Get-WinEvent -LogName $EventLogName -ErrorAction SilentlyContinue
     if ($CloudLAPSEventLog -eq $null) {
         try {
-            New-EventLog -LogName $EventLogName -Source $EventLogSource -ErrorAction Stop
+            #New-EventLog -LogName $EventLogName -Source $EventLogSource -ErrorAction Stop
         }
         catch [System.Exception] {
-            Write-Warning -Message "Failed to create new event log. Error message: $($_.Exception.Message)"
+            #Write-Warning -Message "Failed to create new event log. Error message: $($_.Exception.Message)"
         }
+        $exitcode ++
     }
-    if((Get-Date (Get-EventLog -LogName $EventLogName -InstanceId 40)[0].TimeGenerated).AddDays($Delay) -le (Get-Date)){
-        exit 1
+    if((Get-Date ($CloudLAPSEventLog | Where-Object {$_.id -eq 40})[0].TimeCreated).AddDays($Delay) -le (Get-Date)){
+        $exitcode ++
     }
     # Trigger remediation script
-    exit 0
+    exit $exitcode
 }
