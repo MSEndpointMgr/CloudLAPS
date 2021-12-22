@@ -32,10 +32,10 @@ Process {
     $CloudLAPSEventLog = Get-WinEvent -LogName $EventLogName -ErrorAction SilentlyContinue
     if ($CloudLAPSEventLog -eq $null) {
         try {
-            #New-EventLog -LogName $EventLogName -Source $EventLogSource -ErrorAction Stop
+            New-EventLog -LogName $EventLogName -Source $EventLogSource -ErrorAction Stop
         }
         catch [System.Exception] {
-            #Write-Warning -Message "Failed to create new event log. Error message: $($_.Exception.Message)"
+            Write-Warning -Message "Failed to create new event log. Error message: $($_.Exception.Message)"
         }
         $exitcode ++
     }
