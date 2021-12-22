@@ -19,8 +19,13 @@
 
     Version history:
     1.0.0 - (2020-09-14) Script created
+    1.0.1 - (2021-12-17) Add delay
 #>
 Process {
+    # Delay for Detection
+    $Delay = 30
+
+    $exitcode = 0
     # Create new event log if it doesn't already exist
     $EventLogName = "CloudLAPS-Client"
     $EventLogSource = "CloudLAPS-Client"
@@ -32,8 +37,11 @@ Process {
         catch [System.Exception] {
             Write-Warning -Message "Failed to create new event log. Error message: $($_.Exception.Message)"
         }
+        $exitcode ++
     }
-
+    if((Get-Date ($CloudLAPSEventLog | Where-Object {$_.id -eq 40})[0].TimeCreated).AddDays($Delay) -le (Get-Date)){
+        $exitcode ++
+    }
     # Trigger remediation script
-    exit 1
+    exit $exitcode
 }
