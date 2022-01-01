@@ -14,11 +14,12 @@
     Author:      Nickolaj Andersen
     Contact:     @NickolajA
     Created:     2020-09-14
-    Updated:     2021-10-07
+    Updated:     2022-01-01
 
     Version history:
     1.0.0 - (2020-09-14) Script created
     1.0.1 - (2021-10-07) Updated with output for extended details in MEM portal
+    1.0.2 - (2022-01-01) Updated virtual machine array with 'Google Compute Engine'
 #>
 Process {
     # Functions
@@ -216,15 +217,16 @@ Process {
             Author:      Nickolaj Andersen
             Contact:     @NickolajA
             Created:     2021-06-07
-            Updated:     2021-06-07
+            Updated:     2022-01-01
         
             Version history:
             1.0.0 - (2021-06-07) Function created
+            1.0.1 - (2022-01-01) Updated virtual machine array with 'Google Compute Engine'
         #>
         Process {
             # Check if computer system type is virtual
             $ComputerSystemModel = Get-WmiObject -Class "Win32_ComputerSystem" | Select-Object -ExpandProperty "Model"
-            if ($ComputerSystemModel -in @("Virtual Machine", "VMware Virtual Platform", "VirtualBox", "HVM domU", "KVM", "VMWare7,1")) {
+            if ($ComputerSystemModel -in @("Virtual Machine", "VMware Virtual Platform", "VirtualBox", "HVM domU", "KVM", "VMWare7,1", "Google Compute Engine")) {
                 $ComputerSystemType = "VM"
             }
             else {
