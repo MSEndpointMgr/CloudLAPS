@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1008.15138",
-      "templateHash": "13546778332919325482"
+      "templateHash": "36149091568407430"
     }
   },
   "parameters": {
@@ -23,7 +23,7 @@
       "apiVersion": "2015-08-01",
       "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'ZipDeploy')]",
       "properties": {
-        "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/blob/main/Releases/Dev/CloudLAPS-FunctionApp1.1.0.zip?raw=true"
+        "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/dev/CloudLAPS-FunctionApp1.1.0.zip"
       }
     }
   ]
