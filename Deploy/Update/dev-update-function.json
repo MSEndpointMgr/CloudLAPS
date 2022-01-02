@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "13872813400436073739"
+      "templateHash": "12975685625233834471"
     }
   },
   "parameters": {
@@ -27,11 +27,7 @@
       "type": "Microsoft.Web/sites/config",
       "apiVersion": "2020-06-01",
       "name": "[format('{0}/appsettings', parameters('FunctionAppName'))]",
-      "properties": {
-        "WorkspaceId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId]",
-        "SharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]",
-        "LogType": "CloudLAPSClient"
-      }
+      "properties": "[union(createObject('WorkspaceId', reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId, 'SharedKey', listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey, 'LogType', 'CloudLAPSClient'), list(format('{0}/appSettings', parameters('FunctionAppName')), '2020-12-01').properties)]"
     },
     {
       "type": "Microsoft.Web/sites/extensions",
