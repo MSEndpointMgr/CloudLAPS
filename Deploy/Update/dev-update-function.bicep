@@ -25,11 +25,11 @@ var FunctionAppCurrentSettings = list('${FunctionApp.name}/appSettings', '2020-1
 
 resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   name: '${FunctionApp.name}/appsettings'
-  properties: union({
+  properties: union(FunctionAppCurrentSettings, {
     WorkspaceId: LogAnalyticsWorkspace.properties.customerId
     SharedKey: LogAnalyticsWorkspace.listKeys().primarySharedKey
     LogType: 'CloudLAPSClient'
-  }, FunctionAppCurrentSettings)
+  })
 }
 
 // Add ZipDeploy for Function App
