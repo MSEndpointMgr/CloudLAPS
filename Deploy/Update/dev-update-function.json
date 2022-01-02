@@ -5,11 +5,17 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1008.15138",
-      "templateHash": "36149091568407430"
+      "templateHash": "3713160868107446186"
     }
   },
   "parameters": {
     "FunctionAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the existing Function App that was given when CloudLAPS was initially deployed."
+      }
+    },
+    "LogAnalyticsWorkspaceName": {
       "type": "string",
       "metadata": {
         "description": "Provide the name of the existing Function App that was given when CloudLAPS was initially deployed."
