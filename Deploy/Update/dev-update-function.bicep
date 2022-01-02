@@ -15,12 +15,12 @@ resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10
 var FunctionAppCurrentSettings = list('${FunctionApp.name}/appSettings', '2020-12-01').properties
 
 resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
-  name: '${FunctionApp.name}/appSettings'
-  properties: union({
+  name: '${FunctionApp.name}/appsettings'
+  properties: {
     WorkspaceId: LogAnalyticsWorkspace.properties.customerId
     SharedKey: LogAnalyticsWorkspace.listKeys().primarySharedKey
     LogType: 'CloudLAPSClient'
-  }, FunctionAppCurrentSettings)
+  }
 }
 
 // Add ZipDeploy for Function App
