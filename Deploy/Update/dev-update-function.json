@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "17385607834938538773"
+      "templateHash": "1199625315162891683"
     }
   },
   "parameters": {
@@ -18,16 +18,59 @@
     "LogAnalyticsWorkspaceName": {
       "type": "string",
       "metadata": {
-        "description": "Provide the name of the existing Function App that was given when CloudLAPS was initially deployed."
+        "description": "Provide the name of the existing Log Analytics workspace that was given when CloudLAPS was initially deployed."
+      }
+    },
+    "KeyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the existing Key Vault that was given when CloudLAPS was initially deployed."
+      }
+    },
+    "StorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the existing Storage Account that was automatically given when CloudLAPS was initially deployed."
+      }
+    },
+    "UpdateFrequencyDays": {
+      "type": "string",
+      "defaultValue": "3",
+      "metadata": {
+        "description": "Provide the number of days when password rotation is allowed. Default is 3."
       }
     }
+  },
+  "variables": {
+    "FunctionAppInsightsName": "[format('{0}-fa-ai', parameters('FunctionAppName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Web/sites/config",
       "apiVersion": "2020-06-01",
       "name": "[format('{0}/appsettings', parameters('FunctionAppName'))]",
-      "properties": "[union(list(format('{0}/appSettings', parameters('FunctionAppName')), '2020-12-01').properties, createObject('WorkspaceId', reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId, 'SharedKey', listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey, 'LogType', 'CloudLAPSClient'))]"
+      "properties": {
+        "AzureWebJobsDashboard": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2021-06-01').keys[0].value)]",
+        "AzureWebJobsStorage": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2021-06-01').keys[0].value)]",
+        "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2021-06-01').keys[0].value)]",
+        "WEBSITE_CONTENTSHARE": "[toLower('CloudLAPS')]",
+        "WEBSITE_RUN_FROM_PACKAGE": "1",
+        "AzureWebJobsDisableHomepage": "true",
+        "FUNCTIONS_EXTENSION_VERSION": "~3",
+        "FUNCTIONS_WORKER_PROCESS_COUNT": "3",
+        "PSWorkerInProcConcurrencyUpperBound": "10",
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').InstrumentationKey]",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').ConnectionString]",
+        "FUNCTIONS_WORKER_RUNTIME": "powershell",
+        "UpdateFrequencyDays": "[parameters('UpdateFrequencyDays')]",
+        "KeyVaultName": "[parameters('KeyVaultName')]",
+        "DebugLogging": "False",
+        "PasswordLength": "16",
+        "PasswordAllowedCharacters": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789",
+        "WorkspaceId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId]",
+        "SharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]",
+        "LogType": "CloudLAPSClient"
+      }
     },
     {
       "type": "Microsoft.Web/sites/extensions",
