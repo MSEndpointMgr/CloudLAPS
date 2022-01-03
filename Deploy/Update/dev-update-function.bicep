@@ -35,23 +35,23 @@ resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02
 resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   name: '${FunctionApp.name}/appsettings'
   properties: {
-    'AzureWebJobsDashboard': 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
-    'AzureWebJobsStorage': 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
-    'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING': 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
-    'WEBSITE_CONTENTSHARE': toLower('CloudLAPS')
-    'WEBSITE_RUN_FROM_PACKAGE': '1'
-    'AzureWebJobsDisableHomepage': 'true'
-    'FUNCTIONS_EXTENSION_VERSION': '~3'
-    'FUNCTIONS_WORKER_PROCESS_COUNT': '3'
-    'PSWorkerInProcConcurrencyUpperBound': '10'
-    'APPINSIGHTS_INSTRUMENTATIONKEY': reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
-    'APPLICATIONINSIGHTS_CONNECTION_STRING': reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
-    'FUNCTIONS_WORKER_RUNTIME': 'powershell'
-    'UpdateFrequencyDays': UpdateFrequencyDays
-    'KeyVaultName': KeyVaultName
-    'DebugLogging': 'False'
-    'PasswordLength': '16'
-    'PasswordAllowedCharacters': 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
+    AzureWebJobsDashboard: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
+    AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
+    WEBSITE_CONTENTSHARE: toLower('CloudLAPS')
+    WEBSITE_RUN_FROM_PACKAGE: '1'
+    AzureWebJobsDisableHomepage: 'true'
+    FUNCTIONS_EXTENSION_VERSION: '~3'
+    FUNCTIONS_WORKER_PROCESS_COUNT: '3'
+    PSWorkerInProcConcurrencyUpperBound: '10'
+    APPINSIGHTS_INSTRUMENTATIONKEY: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
+    APPLICATIONINSIGHTS_CONNECTION_STRING: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
+    FUNCTIONS_WORKER_RUNTIME: 'powershell'
+    UpdateFrequencyDays: UpdateFrequencyDays
+    KeyVaultName: KeyVaultName
+    DebugLogging: 'False'
+    PasswordLength: '16'
+    PasswordAllowedCharacters: 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
     WorkspaceId: LogAnalyticsWorkspace.properties.customerId
     SharedKey: LogAnalyticsWorkspace.listKeys().primarySharedKey
     LogType: 'CloudLAPSClient'
