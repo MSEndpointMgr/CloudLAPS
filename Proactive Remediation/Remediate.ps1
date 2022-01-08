@@ -14,12 +14,13 @@
     Author:      Nickolaj Andersen
     Contact:     @NickolajA
     Created:     2020-09-14
-    Updated:     2022-01-01
+    Updated:     2022-01-08
 
     Version history:
     1.0.0 - (2020-09-14) Script created
     1.0.1 - (2021-10-07) Updated with output for extended details in MEM portal
     1.0.2 - (2022-01-01) Updated virtual machine array with 'Google Compute Engine'
+    1.1.0 - (2022-01-08) Added support for new SendClientEvent function to send client events related to passwor rotation
 #>
 Process {
     # Functions
@@ -242,7 +243,11 @@ Process {
     $LocalAdministratorName = "<Enter the name of the local administrator account>"
 
     # Construct the required URI for the Azure Function URL
-    $URI = "<Enter Azure Functions URI>"
+    $SetSecretURI = "<Enter Azure Functions URI for SetSecret function>"
+    $SendClientEventURI = "<Enter Azure Functions URI for SendClientEvent function>"
+
+    # Control whether client-side audit events should be sent to Log Analytics workspace
+    $SendClientEvent = $true
 
     # Define event log variables
     $EventLogName = "CloudLAPS-Client"
@@ -259,8 +264,8 @@ Process {
     $Signature = New-RSACertificateSignature -Content $AzureADDeviceID -Thumbprint $CertificateThumbprint
     $PublicKeyBytesEncoded = Get-PublicKeyBytesEncodedString -Thumbprint $CertificateThumbprint
 
-    # Construct request header
-    $BodyTable = [ordered]@{
+    # Construct SetSecret function request header
+    $SetSecretHeaderTable = [ordered]@{
         DeviceName = $env:COMPUTERNAME
         DeviceID = $AzureADDeviceID
         SerialNumber = if (-not([string]::IsNullOrEmpty($SerialNumber))) { $SerialNumber } else { $env:COMPUTERNAME } # fall back to computer name if serial number is not present
@@ -272,6 +277,19 @@ Process {
         UserName = $LocalAdministratorName
     }
 
+    # Construct SendClientEvent request header
+    $SendClientEventHeaderTable = [ordered]@{
+        DeviceName = $env:COMPUTERNAME
+        DeviceID = $AzureADDeviceID
+        SerialNumber = if (-not([string]::IsNullOrEmpty($SerialNumber))) { $SerialNumber } else { $env:COMPUTERNAME } # fall back to computer name if serial number is not present
+        Signature = $Signature
+        Thumbprint = $CertificateThumbprint
+        PublicKey = $PublicKeyBytesEncoded        
+        PasswordRotationResult = ""
+        DateTimeUTC = (Get-Date).ToUniversalTime().ToString()
+        ClientEventMessage = ""
+    }
+
     # Initiate exit code variable with default value if not errors are caught
     $ExitCode = 0
 
@@ -279,9 +297,9 @@ Process {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
     try {
-        # Call Azure Function REST API to store new secret in Key Vault for current computer and have the randomly generated password returned
+        # Call Azure Function SetSecret to store new secret in Key Vault for current computer and have the randomly generated password returned
         Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 11 -Message "CloudLAPS: Calling Azure Function API for password generation and secret update"
-        $APIResponse = Invoke-RestMethod -Method "POST" -Uri $URI -Body ($BodyTable | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
+        $APIResponse = Invoke-RestMethod -Method "POST" -Uri $SetSecretURI -Body ($SetSecretHeaderTable | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
 
         if ([string]::IsNullOrEmpty($APIResponse)) {
             Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 13 -Message "CloudLAPS: Retrieved an empty response from Azure Function URL"; $ExitCode = 1
@@ -318,13 +336,36 @@ Process {
                 # Local administrator account already exists, reset password
                 try {
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 30 -Message "CloudLAPS: Local administrator account exists, updating password"
-                    Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -UserMayChangePassword $false -ErrorAction Stop
+
+                    # Determine if changes are being made to the built-in local administrator account, if so don't attempt to set properties for password changes
+                    if ($LocalAdministratorAccount.SID -match "S-1-5-21-.*-500") {
+                        Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -ErrorAction Stop
+                    }
+                    else {
+                        Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -UserMayChangePassword $false -ErrorAction Stop
+                    }
                     
                     # Write output for extended details in MEM portal
                     Write-Output -InputObject "Password rotation completed"
                 }
                 catch [System.Exception] {
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 31 -Message "CloudLAPS: Failed to rotate password for '$($LocalAdministratorName)' local user account. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
+                }
+            }
+
+            if (($SendClientEvent -eq $true) -and ($Error.Count -eq 0)) {
+                # Amend header table with success parameters before sending client event
+                $SendClientEventHeaderTable["PasswordRotationResult"] = "Success"
+                $SendClientEventHeaderTable["ClientEventMessage"] = "Password rotation completed successfully"
+
+                try {
+                    # Call Azure Functions SendClientEvent API to post client event
+                    $APIResponse = Invoke-RestMethod -Method "POST" -Uri $SendClientEventURI -Body ($SendClientEventHeaderTable | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
+    
+                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 50 -Message "CloudLAPS: Successfully sent client event to API"
+                }
+                catch [System.Exception] {
+                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 51 -Message "CloudLAPS: Failed to send client event to API. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
                 }
             }
 
@@ -336,26 +377,48 @@ Process {
         switch ($PSItem.Exception.Response.StatusCode) {
             "Forbidden" {
                 # Write output for extended details in MEM portal
-                Write-Output -InputObject "Password rotation not allowed"
+                $FailureResult = "NotAllowed"
+                $FailureMessage = "Password rotation not allowed"
+                Write-Output -InputObject $FailureResult
 
                 # Write to event log and set exit code
                 Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Warning -EventId 14 -Message "CloudLAPS: Forbidden, password was not allowed to be updated"; $ExitCode = 0
             }
             "BadRequest" {
                 # Write output for extended details in MEM portal
-                Write-Output -InputObject "Password rotation failed"
+                $FailureResult = "BadRequest"
+                $FailureMessage = "Password rotation failed with BadRequest"
+                Write-Output -InputObject $FailureResult
 
                 # Write to event log and set exit code
                 Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 15 -Message "CloudLAPS: BadRequest, failed to update password"; $ExitCode = 1
             }
             default {
                 # Write output for extended details in MEM portal
-                Write-Output -InputObject "Password rotation failed"
+                $FailureResult = "Failed"
+                $FailureMessage = "Password rotation failed with unknown reason"
+                Write-Output -InputObject $FailureResult
 
                 # Write to event log and set exit code
                 Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 12 -Message "CloudLAPS: Call to Azure Function URI failed. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
             }
         }
+
+        if ($SendClientEvent -eq $true) {
+            # Amend header table with success parameters before sending client event
+            $SendClientEventHeaderTable["PasswordRotationResult"] = $FailureResult
+            $SendClientEventHeaderTable["ClientEventMessage"] = $FailureMessage
+
+            try {
+                # Call Azure Functions SendClientEvent API to post client event
+                $APIResponse = Invoke-RestMethod -Method "POST" -Uri $SendClientEventURI -Body ($SendClientEventHeaderTable | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
+
+                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 50 -Message "CloudLAPS: Successfully sent client event to API"
+            }
+            catch [System.Exception] {
+                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 51 -Message "CloudLAPS: Failed to send client event to API. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
+            }
+        }        
     }
 
     # Handle exit code
