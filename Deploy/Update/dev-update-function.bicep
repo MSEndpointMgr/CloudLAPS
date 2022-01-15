@@ -54,7 +54,7 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
     PasswordAllowedCharacters: 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
     WorkspaceId: LogAnalyticsWorkspace.properties.customerId
     SharedKey: LogAnalyticsWorkspace.listKeys().primarySharedKey
-    LogType: 'CloudLAPSClient'
+    LogTypeClient: 'CloudLAPSClient'
   }
 }
 

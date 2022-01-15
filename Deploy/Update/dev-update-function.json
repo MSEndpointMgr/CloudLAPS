@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "11485508869754315881"
+      "templateHash": "11013955496070913987"
     }
   },
   "parameters": {
@@ -69,7 +69,7 @@
         "PasswordAllowedCharacters": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789",
         "WorkspaceId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId]",
         "SharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]",
-        "LogType": "CloudLAPSClient"
+        "LogTypeClient": "CloudLAPSClient"
       }
     },
     {
