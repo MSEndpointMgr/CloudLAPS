@@ -174,6 +174,7 @@ $PasswordRotationResult = $Request.Body.PasswordRotationResult
 $DateTimeUtc = $Request.Body.DateTimeUtc
 $ClientEventMessage = $Request.Body.ClientEventMessage
 
+# Construct body for Log Analytics custom log content
 $WorkspaceBody = @{
     SerialNumber = $SerialNumber
     AzureADDeviceId = $DeviceID
