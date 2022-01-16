@@ -286,7 +286,7 @@ Process {
         Thumbprint = $CertificateThumbprint
         PublicKey = $PublicKeyBytesEncoded        
         PasswordRotationResult = ""
-        DateTimeUTC = (Get-Date).ToUniversalTime().ToString()
+        DateTimeUtc = (Get-Date).ToUniversalTime().ToString()
         ClientEventMessage = ""
     }
 
@@ -362,7 +362,7 @@ Process {
                     # Call Azure Functions SendClientEvent API to post client event
                     $APIResponse = Invoke-RestMethod -Method "POST" -Uri $SendClientEventURI -Body ($SendClientEventHeaderTable | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
     
-                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 50 -Message "CloudLAPS: Successfully sent client event to API"
+                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 50 -Message "CloudLAPS: Successfully sent client event to API. Message: $($SendClientEventHeaderTable["ClientEventMessage"])"
                 }
                 catch [System.Exception] {
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 51 -Message "CloudLAPS: Failed to send client event to API. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
@@ -413,10 +413,10 @@ Process {
                 # Call Azure Functions SendClientEvent API to post client event
                 $APIResponse = Invoke-RestMethod -Method "POST" -Uri $SendClientEventURI -Body ($SendClientEventHeaderTable | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
 
-                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 50 -Message "CloudLAPS: Successfully sent client event to API"
+                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 52 -Message "CloudLAPS: Successfully sent client event to API. Message: $($FailureMessage)"
             }
             catch [System.Exception] {
-                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 51 -Message "CloudLAPS: Failed to send client event to API. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
+                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 53 -Message "CloudLAPS: Failed to send client event to API. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
             }
         }        
     }
