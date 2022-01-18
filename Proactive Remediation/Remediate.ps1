@@ -246,8 +246,9 @@ Process {
     $SetSecretURI = "<Enter Azure Functions URI for SetSecret function>"
     $SendClientEventURI = "<Enter Azure Functions URI for SendClientEvent function>"
 
-    # Control whether client-side audit events should be sent to Log Analytics workspace
-    $SendClientEvent = $true
+    # Control whether client-side events should be sent to Log Analytics workspace
+    # Set to $true to enable this feature
+    $SendClientEvent = $false
 
     # Define event log variables
     $EventLogName = "CloudLAPS-Client"
