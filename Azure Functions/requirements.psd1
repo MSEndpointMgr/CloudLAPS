@@ -3,6 +3,5 @@
 #
 @{
     # For latest supported version, go to 'https://www.powershellgallery.com/packages/Az'. 
-    'Az' = '5.*'
-    'WPNinjas.PasswordGeneration' = '1.*'
+    #'Az' = '5.*'
 }
