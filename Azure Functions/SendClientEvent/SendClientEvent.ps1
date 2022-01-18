@@ -146,7 +146,6 @@ function Send-LogAnalyticsPayload {
     }
 }
 
-
 Write-Output -InputObject "Inbound request from IP: $($TriggerMetadata.'$Request'.headers.'x-forwarded-for'.Split(":")[0])"
 
 # Read application settings for internal variables
