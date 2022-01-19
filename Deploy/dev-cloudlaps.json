@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "9081976864967065709"
+      "templateHash": "2065708122408770727"
     }
   },
   "parameters": {
@@ -308,6 +308,7 @@
         "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName'))).customerId]"
       },
       "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('KeyVaultAppSettingsName'))]",
         "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName'))]"
       ]
     },
@@ -319,6 +320,7 @@
         "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]"
       },
       "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('KeyVaultAppSettingsName'))]",
         "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName'))]"
       ]
     },

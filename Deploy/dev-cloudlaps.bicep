@@ -254,12 +254,18 @@ resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
   properties: {
     value: LogAnalyticsWorkspaceId
   }
+  dependsOn: [
+    KeyVaultAppSettings
+  ]
 }
 resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
   name: '${KeyVaultAppSettingsName}/LogAnalyticsWorkspaceSharedKey'
   properties: {
     value: LogAnalyticsWorkspaceSharedKey
   }
+  dependsOn: [
+    KeyVaultAppSettings
+  ]
 }
 
 // Deploy application settings for CloudLAPS Function App
