@@ -10,28 +10,45 @@ param StorageAccountName string
 @description('Provide the number of days when password rotation is allowed. Default is 3.')
 param UpdateFrequencyDays string = '3'
 
+// Automatically construct variable for Application Insights based on Function App name input
 var FunctionAppInsightsName = '${FunctionAppName}-fa-ai'
 
+// Define existing resources based on param input
 resource FunctionApp 'Microsoft.Web/sites@2020-12-01' existing = { 
   name: FunctionAppName
 }
-
 resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' existing = {
   name: LogAnalyticsWorkspaceName
 }
-
 resource KeyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
   name: KeyVaultName
 }
-
 resource StorageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' existing = {
   name: StorageAccountName
 }
-
 resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' existing = {
   name: FunctionAppInsightsName
 }
 
+// Collect Log Analytics workspace properties to be added to Key Vault as secrets
+var LogAnalyticsWorkspaceId = LogAnalyticsWorkspace.properties.customerId
+var LogAnalyticsWorkspaceSharedKey = LogAnalyticsWorkspace.listKeys().primarySharedKey
+
+// Construct secrets in Key Vault
+resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${KeyVaultName}/LogAnalyticsWorkspaceId'
+  properties: {
+    value: LogAnalyticsWorkspaceId
+  }
+}
+resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${KeyVaultName}/LogAnalyticsWorkspaceSharedKey'
+  properties: {
+    value: LogAnalyticsWorkspaceSharedKey
+  }
+}
+
+// Construct appSettings resource and ensure default values including new ones are added
 resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   name: '${FunctionApp.name}/appsettings'
   properties: {
@@ -52,8 +69,8 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
     DebugLogging: 'False'
     PasswordLength: '16'
     PasswordAllowedCharacters: 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
-    WorkspaceId: LogAnalyticsWorkspace.properties.customerId
-    SharedKey: LogAnalyticsWorkspace.listKeys().primarySharedKey
+    LogAnalyticsWorkspaceId: '@Microsoft.KeyVault(VaultName=${KeyVaultName};SecretName=LogAnalyticsWorkspaceId)'
+    LogAnalyticsWorkspaceSharedKey: '@Microsoft.KeyVault(VaultName=${KeyVaultName};SecretName=LogAnalyticsWorkspaceSharedKey)'
     LogTypeClient: 'CloudLAPSClient'
   }
 }

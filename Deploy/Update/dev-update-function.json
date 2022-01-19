@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "11013955496070913987"
+      "templateHash": "16265222754308726447"
     }
   },
   "parameters": {
@@ -46,6 +46,22 @@
   },
   "resources": [
     {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[format('{0}/LogAnalyticsWorkspaceId', parameters('KeyVaultName'))]",
+      "properties": {
+        "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[format('{0}/LogAnalyticsWorkspaceSharedKey', parameters('KeyVaultName'))]",
+      "properties": {
+        "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]"
+      }
+    },
+    {
       "type": "Microsoft.Web/sites/config",
       "apiVersion": "2020-06-01",
       "name": "[format('{0}/appsettings', parameters('FunctionAppName'))]",
@@ -67,8 +83,8 @@
         "DebugLogging": "False",
         "PasswordLength": "16",
         "PasswordAllowedCharacters": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789",
-        "WorkspaceId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId]",
-        "SharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]",
+        "LogAnalyticsWorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', parameters('KeyVaultName'))]",
+        "LogAnalyticsWorkspaceSharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', parameters('KeyVaultName'))]",
         "LogTypeClient": "CloudLAPSClient"
       }
     },
