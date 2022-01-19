@@ -149,8 +149,8 @@ function Send-LogAnalyticsPayload {
 Write-Output -InputObject "Inbound request from IP: $($TriggerMetadata.'$Request'.headers.'x-forwarded-for'.Split(":")[0])"
 
 # Read application settings for internal variables
-$WorkspaceID = if (-not([string]::IsNullOrEmpty($env:WorkspaceId))) { $env:WorkspaceId } else { "InvalidWorkspace" }
-$SharedKey = if (-not([string]::IsNullOrEmpty($env:SharedKey))) { $env:SharedKey } else { "InvalidSharedKey" }
+$WorkspaceID = if (-not([string]::IsNullOrEmpty($env:LogAnalyticsWorkspaceId))) { $env:LogAnalyticsWorkspaceId } else { "InvalidWorkspace" }
+$SharedKey = if (-not([string]::IsNullOrEmpty($env:LogAnalyticsWorkspaceSharedKey))) { $env:LogAnalyticsWorkspaceSharedKey } else { "InvalidSharedKey" }
 $LogType = if (-not([string]::IsNullOrEmpty($env:LogTypeClient))) { $env:LogTypeClient } else { "CloudLAPSClient" }
 $DebugLogging = if (-not([string]::IsNullOrEmpty($env:DebugLogging))) { $env:DebugLogging } else { $false }
 
