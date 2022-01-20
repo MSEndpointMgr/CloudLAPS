@@ -1,6 +1,8 @@
 // Define parameters
 @description('Provide the name of the existing Function App that was given when CloudLAPS was initially deployed.')
 param FunctionAppName string
+@description('Provide the name of the existing CloudLAPS portal website.')
+param PortalWebAppName string
 @description('Provide the name of the existing Log Analytics workspace that was given when CloudLAPS was initially deployed.')
 param LogAnalyticsWorkspaceName string
 @description('Provide the name of the existing Key Vault that was given when CloudLAPS was initially deployed.')
@@ -10,12 +12,16 @@ param StorageAccountName string
 @description('Provide the number of days when password rotation is allowed. Default is 3.')
 param UpdateFrequencyDays string = '3'
 
-// Automatically construct variable for Application Insights based on Function App name input
+// Automatically construct variables based on param input
 var FunctionAppInsightsName = '${FunctionAppName}-fa-ai'
+var KeyVaultAppSettingsName = '${take(KeyVaultName, 21)}-as'
 
 // Define existing resources based on param input
 resource FunctionApp 'Microsoft.Web/sites@2020-12-01' existing = { 
   name: FunctionAppName
+}
+resource PortalAppService 'Microsoft.Web/sites@2020-12-01' existing = { 
+  name: PortalWebAppName
 }
 resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' existing = {
   name: LogAnalyticsWorkspaceName
@@ -30,6 +36,42 @@ resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02
   name: FunctionAppInsightsName
 }
 
+// Create Key Vault for Function App application settings
+resource KeyVaultAppSettings 'Microsoft.KeyVault/vaults@2019-09-01' = {
+  name: KeyVaultAppSettingsName
+  location: resourceGroup().location
+  properties: {
+    enabledForDeployment: false
+    enabledForTemplateDeployment: false
+    enabledForDiskEncryption: false
+    tenantId: subscription().tenantId
+    accessPolicies: [
+      {
+        tenantId: FunctionApp.identity.tenantId
+        objectId: FunctionApp.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+      {
+        tenantId: PortalAppService.identity.tenantId
+        objectId: PortalAppService.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+    ]
+    sku: {
+      name: 'standard'
+      family: 'A'
+    }
+  }
+}
+
 // Collect Log Analytics workspace properties to be added to Key Vault as secrets
 var LogAnalyticsWorkspaceId = LogAnalyticsWorkspace.properties.customerId
 var LogAnalyticsWorkspaceSharedKey = LogAnalyticsWorkspace.listKeys().primarySharedKey
@@ -40,12 +82,18 @@ resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
   properties: {
     value: LogAnalyticsWorkspaceId
   }
+  dependsOn: [
+    KeyVaultAppSettings
+  ]
 }
 resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
   name: '${KeyVaultName}/LogAnalyticsWorkspaceSharedKey'
   properties: {
     value: LogAnalyticsWorkspaceSharedKey
   }
+  dependsOn: [
+    KeyVaultAppSettings
+  ]
 }
 
 // Construct appSettings resource and ensure default values including new ones are added
