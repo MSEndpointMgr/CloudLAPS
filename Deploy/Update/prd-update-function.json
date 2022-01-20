@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1008.15138",
-      "templateHash": "15056817424865875990"
+      "version": "0.4.1124.51302",
+      "templateHash": "493673872450183720"
     }
   },
   "parameters": {
@@ -14,16 +14,158 @@
       "metadata": {
         "description": "Provide the name of the existing Function App that was given when CloudLAPS was initially deployed."
       }
+    },
+    "PortalWebAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the existing portal Web App that was given when CloudLAPS was initially deployed."
+      }
+    },
+    "LogAnalyticsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the existing Log Analytics workspace that was given when CloudLAPS was initially deployed."
+      }
+    },
+    "KeyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the existing Key Vault that was given when CloudLAPS was initially deployed."
+      }
+    },
+    "StorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the existing Storage Account that was automatically given when CloudLAPS was initially deployed."
+      }
+    },
+    "ApplicationID": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the App registration application identifier that was created when CloudLAPS was initially deployed."
+      }
+    },
+    "UpdateFrequencyDays": {
+      "type": "string",
+      "defaultValue": "3",
+      "metadata": {
+        "description": "Provide the number of days when password rotation is allowed. Default is 3."
+      }
     }
   },
-  "functions": [],
+  "variables": {
+    "FunctionAppInsightsName": "[format('{0}-fa-ai', parameters('FunctionAppName'))]",
+    "PortalAppInsightsName": "[format('{0}-wa-ai', parameters('FunctionAppName'))]",
+    "KeyVaultAppSettingsName": "[format('{0}-as', take(parameters('KeyVaultName'), 21))]"
+  },
   "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2019-09-01",
+      "name": "[variables('KeyVaultAppSettingsName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "enabledForDeployment": false,
+        "enabledForTemplateDeployment": false,
+        "enabledForDiskEncryption": false,
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "get"
+              ]
+            }
+          },
+          {
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('PortalWebAppName')), '2020-12-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('PortalWebAppName')), '2020-12-01', 'full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "get"
+              ]
+            }
+          }
+        ],
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[format('{0}/LogAnalyticsWorkspaceId', variables('KeyVaultAppSettingsName'))]",
+      "properties": {
+        "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('KeyVaultAppSettingsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[format('{0}/LogAnalyticsWorkspaceSharedKey', variables('KeyVaultAppSettingsName'))]",
+      "properties": {
+        "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('KeyVaultAppSettingsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/appsettings', parameters('FunctionAppName'))]",
+      "properties": {
+        "AzureWebJobsDashboard": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2021-06-01').keys[0].value)]",
+        "AzureWebJobsStorage": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2021-06-01').keys[0].value)]",
+        "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', parameters('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName')), '2021-06-01').keys[0].value)]",
+        "WEBSITE_CONTENTSHARE": "[toLower('CloudLAPS')]",
+        "WEBSITE_RUN_FROM_PACKAGE": "1",
+        "AzureWebJobsDisableHomepage": "true",
+        "FUNCTIONS_EXTENSION_VERSION": "~3",
+        "FUNCTIONS_WORKER_PROCESS_COUNT": "3",
+        "PSWorkerInProcConcurrencyUpperBound": "10",
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').InstrumentationKey]",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').ConnectionString]",
+        "FUNCTIONS_WORKER_RUNTIME": "powershell",
+        "UpdateFrequencyDays": "[parameters('UpdateFrequencyDays')]",
+        "KeyVaultName": "[parameters('KeyVaultName')]",
+        "DebugLogging": "False",
+        "PasswordLength": "16",
+        "PasswordAllowedCharacters": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789",
+        "LogAnalyticsWorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', variables('KeyVaultAppSettingsName'))]",
+        "LogAnalyticsWorkspaceSharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', variables('KeyVaultAppSettingsName'))]",
+        "LogTypeClient": "CloudLAPSClient"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/appsettings', parameters('PortalWebAppName'))]",
+      "properties": {
+        "AzureWebJobsSecretStorageKeyVaultName": "[parameters('KeyVaultName')]",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName')), '2020-02-02-preview').ConnectionString]",
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName')), '2020-02-02-preview').InstrumentationKey]",
+        "AzureAd:TenantId": "[subscription().tenantId]",
+        "AzureAd:ClientId": "[parameters('ApplicationID')]",
+        "KeyVault:Uri": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName')), '2019-09-01').vaultUri]",
+        "LogAnalytics:WorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', variables('KeyVaultAppSettingsName'))]",
+        "LogAnalytics:SharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', variables('KeyVaultAppSettingsName'))]",
+        "LogAnalytics:LogType": "CloudLAPSAudit"
+      }
+    },
     {
       "type": "Microsoft.Web/sites/extensions",
       "apiVersion": "2015-08-01",
       "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'ZipDeploy')]",
       "properties": {
-        "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip"
+        "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-FunctionApp1.1.0.zip"
       }
     }
   ]
