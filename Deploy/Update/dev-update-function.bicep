@@ -1,7 +1,7 @@
 // Define parameters
 @description('Provide the name of the existing Function App that was given when CloudLAPS was initially deployed.')
 param FunctionAppName string
-@description('Provide the name of the existing CloudLAPS portal website.')
+@description('Provide the name of the existing portal Web App that was given when CloudLAPS was initially deployed.')
 param PortalWebAppName string
 @description('Provide the name of the existing Log Analytics workspace that was given when CloudLAPS was initially deployed.')
 param LogAnalyticsWorkspaceName string
@@ -9,12 +9,16 @@ param LogAnalyticsWorkspaceName string
 param KeyVaultName string
 @description('Provide the name of the existing Storage Account that was automatically given when CloudLAPS was initially deployed.')
 param StorageAccountName string
+@description('Provide the App registration application identifier that was created when CloudLAPS was initially deployed.')
+param ApplicationID string
 @description('Provide the number of days when password rotation is allowed. Default is 3.')
 param UpdateFrequencyDays string = '3'
 
 // Automatically construct variables based on param input
 var FunctionAppInsightsName = '${FunctionAppName}-fa-ai'
+var PortalAppInsightsName = '${FunctionAppName}-wa-ai'
 var KeyVaultAppSettingsName = '${take(KeyVaultName, 21)}-as'
+
 
 // Define existing resources based on param input
 resource FunctionApp 'Microsoft.Web/sites@2020-12-01' existing = { 
@@ -34,6 +38,9 @@ resource StorageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' existing 
 }
 resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' existing = {
   name: FunctionAppInsightsName
+}
+resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' existing = {
+  name: PortalAppInsightsName
 }
 
 // Create Key Vault for Function App application settings
@@ -96,7 +103,7 @@ resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
   ]
 }
 
-// Construct appSettings resource and ensure default values including new ones are added
+// Construct appSettings resource for Function App and ensure default values including new ones are added
 resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   name: '${FunctionApp.name}/appsettings'
   properties: {
@@ -120,6 +127,22 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
     LogAnalyticsWorkspaceId: '@Microsoft.KeyVault(VaultName=${KeyVaultName};SecretName=LogAnalyticsWorkspaceId)'
     LogAnalyticsWorkspaceSharedKey: '@Microsoft.KeyVault(VaultName=${KeyVaultName};SecretName=LogAnalyticsWorkspaceSharedKey)'
     LogTypeClient: 'CloudLAPSClient'
+  }
+}
+
+// Construct appSettings resource for CloudLAPS Portal and ensure default values including new ones are added
+resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+  name: '${PortalAppService.name}/appsettings'
+  properties: {
+      AzureWebJobsSecretStorageKeyVaultName: KeyVault.name
+      APPLICATIONINSIGHTS_CONNECTION_STRING: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
+      APPINSIGHTS_INSTRUMENTATIONKEY: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
+      'AzureAd:TenantId': subscription().tenantId
+      'AzureAd:ClientId': ApplicationID
+      'KeyVault:Uri': KeyVault.properties.vaultUri
+      'LogAnalytics:WorkspaceId': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceId)'
+      'LogAnalytics:SharedKey': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
+      'LogAnalytics:LogType': 'CloudLAPSAudit'
   }
 }
 

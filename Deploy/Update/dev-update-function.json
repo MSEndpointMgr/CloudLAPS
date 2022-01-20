@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "6727990530504122175"
+      "templateHash": "10015425012693070785"
     }
   },
   "parameters": {
@@ -18,7 +18,7 @@
     "PortalWebAppName": {
       "type": "string",
       "metadata": {
-        "description": "Provide the name of the existing CloudLAPS portal website."
+        "description": "Provide the name of the existing portal Web App that was given when CloudLAPS was initially deployed."
       }
     },
     "LogAnalyticsWorkspaceName": {
@@ -39,6 +39,12 @@
         "description": "Provide the name of the existing Storage Account that was automatically given when CloudLAPS was initially deployed."
       }
     },
+    "ApplicationID": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the App registration application identifier that was created when CloudLAPS was initially deployed."
+      }
+    },
     "UpdateFrequencyDays": {
       "type": "string",
       "defaultValue": "3",
@@ -49,6 +55,7 @@
   },
   "variables": {
     "FunctionAppInsightsName": "[format('{0}-fa-ai', parameters('FunctionAppName'))]",
+    "PortalAppInsightsName": "[format('{0}-wa-ai', parameters('FunctionAppName'))]",
     "KeyVaultAppSettingsName": "[format('{0}-as', take(parameters('KeyVaultName'), 21))]"
   },
   "resources": [
@@ -135,6 +142,22 @@
         "LogAnalyticsWorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', parameters('KeyVaultName'))]",
         "LogAnalyticsWorkspaceSharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', parameters('KeyVaultName'))]",
         "LogTypeClient": "CloudLAPSClient"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/appsettings', parameters('PortalWebAppName'))]",
+      "properties": {
+        "AzureWebJobsSecretStorageKeyVaultName": "[parameters('KeyVaultName')]",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName')), '2020-02-02-preview').ConnectionString]",
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName')), '2020-02-02-preview').InstrumentationKey]",
+        "AzureAd:TenantId": "[subscription().tenantId]",
+        "AzureAd:ClientId": "[parameters('ApplicationID')]",
+        "KeyVault:Uri": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName')), '2019-09-01').vaultUri]",
+        "LogAnalytics:WorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', variables('KeyVaultAppSettingsName'))]",
+        "LogAnalytics:SharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', variables('KeyVaultAppSettingsName'))]",
+        "LogAnalytics:LogType": "CloudLAPSAudit"
       }
     },
     {
