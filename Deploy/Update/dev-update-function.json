@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "10015425012693070785"
+      "templateHash": "493673872450183720"
     }
   },
   "parameters": {
@@ -98,7 +98,7 @@
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2019-09-01",
-      "name": "[format('{0}/LogAnalyticsWorkspaceId', parameters('KeyVaultName'))]",
+      "name": "[format('{0}/LogAnalyticsWorkspaceId', variables('KeyVaultAppSettingsName'))]",
       "properties": {
         "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId]"
       },
@@ -109,7 +109,7 @@
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2019-09-01",
-      "name": "[format('{0}/LogAnalyticsWorkspaceSharedKey', parameters('KeyVaultName'))]",
+      "name": "[format('{0}/LogAnalyticsWorkspaceSharedKey', variables('KeyVaultAppSettingsName'))]",
       "properties": {
         "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]"
       },
@@ -139,8 +139,8 @@
         "DebugLogging": "False",
         "PasswordLength": "16",
         "PasswordAllowedCharacters": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789",
-        "LogAnalyticsWorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', parameters('KeyVaultName'))]",
-        "LogAnalyticsWorkspaceSharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', parameters('KeyVaultName'))]",
+        "LogAnalyticsWorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', variables('KeyVaultAppSettingsName'))]",
+        "LogAnalyticsWorkspaceSharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', variables('KeyVaultAppSettingsName'))]",
         "LogTypeClient": "CloudLAPSClient"
       }
     },

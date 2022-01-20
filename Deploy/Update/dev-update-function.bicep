@@ -85,7 +85,7 @@ var LogAnalyticsWorkspaceSharedKey = LogAnalyticsWorkspace.listKeys().primarySha
 
 // Construct secrets in Key Vault
 resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${KeyVaultName}/LogAnalyticsWorkspaceId'
+  name: '${KeyVaultAppSettingsName}/LogAnalyticsWorkspaceId'
   properties: {
     value: LogAnalyticsWorkspaceId
   }
@@ -94,7 +94,7 @@ resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
   ]
 }
 resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-  name: '${KeyVaultName}/LogAnalyticsWorkspaceSharedKey'
+  name: '${KeyVaultAppSettingsName}/LogAnalyticsWorkspaceSharedKey'
   properties: {
     value: LogAnalyticsWorkspaceSharedKey
   }
@@ -124,8 +124,8 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
     DebugLogging: 'False'
     PasswordLength: '16'
     PasswordAllowedCharacters: 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
-    LogAnalyticsWorkspaceId: '@Microsoft.KeyVault(VaultName=${KeyVaultName};SecretName=LogAnalyticsWorkspaceId)'
-    LogAnalyticsWorkspaceSharedKey: '@Microsoft.KeyVault(VaultName=${KeyVaultName};SecretName=LogAnalyticsWorkspaceSharedKey)'
+    LogAnalyticsWorkspaceId: '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceId)'
+    LogAnalyticsWorkspaceSharedKey: '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
     LogTypeClient: 'CloudLAPSClient'
   }
 }
