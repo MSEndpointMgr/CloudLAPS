@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "16265222754308726447"
+      "templateHash": "6727990530504122175"
     }
   },
   "parameters": {
@@ -13,6 +13,12 @@
       "type": "string",
       "metadata": {
         "description": "Provide the name of the existing Function App that was given when CloudLAPS was initially deployed."
+      }
+    },
+    "PortalWebAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the existing CloudLAPS portal website."
       }
     },
     "LogAnalyticsWorkspaceName": {
@@ -42,16 +48,56 @@
     }
   },
   "variables": {
-    "FunctionAppInsightsName": "[format('{0}-fa-ai', parameters('FunctionAppName'))]"
+    "FunctionAppInsightsName": "[format('{0}-fa-ai', parameters('FunctionAppName'))]",
+    "KeyVaultAppSettingsName": "[format('{0}-as', take(parameters('KeyVaultName'), 21))]"
   },
   "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2019-09-01",
+      "name": "[variables('KeyVaultAppSettingsName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "enabledForDeployment": false,
+        "enabledForTemplateDeployment": false,
+        "enabledForDiskEncryption": false,
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('FunctionAppName')), '2020-12-01', 'full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "get"
+              ]
+            }
+          },
+          {
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('PortalWebAppName')), '2020-12-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('PortalWebAppName')), '2020-12-01', 'full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "get"
+              ]
+            }
+          }
+        ],
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        }
+      }
+    },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
       "apiVersion": "2019-09-01",
       "name": "[format('{0}/LogAnalyticsWorkspaceId', parameters('KeyVaultName'))]",
       "properties": {
         "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').customerId]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('KeyVaultAppSettingsName'))]"
+      ]
     },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
@@ -59,7 +105,10 @@
       "name": "[format('{0}/LogAnalyticsWorkspaceSharedKey', parameters('KeyVaultName'))]",
       "properties": {
         "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('KeyVaultAppSettingsName'))]"
+      ]
     },
     {
       "type": "Microsoft.Web/sites/config",
