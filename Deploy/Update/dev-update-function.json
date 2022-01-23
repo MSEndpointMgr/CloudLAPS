@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "14570653106292833352"
+      "templateHash": "11279002633507567880"
     }
   },
   "parameters": {
@@ -50,6 +50,20 @@
       "defaultValue": "3",
       "metadata": {
         "description": "Provide the number of days when password rotation is allowed. Default is 3."
+      }
+    },
+    "PasswordLength": {
+      "type": "string",
+      "defaultValue": "16",
+      "metadata": {
+        "description": "Provide the default length of the generated local admin password. Default is 16."
+      }
+    },
+    "PasswordAllowedCharacters": {
+      "type": "string",
+      "defaultValue": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789",
+      "metadata": {
+        "description": "Provide the default character set to be used when generating the local admin password. Default is value is ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789."
       }
     }
   },
@@ -137,8 +151,8 @@
         "UpdateFrequencyDays": "[parameters('UpdateFrequencyDays')]",
         "KeyVaultName": "[parameters('KeyVaultName')]",
         "DebugLogging": "False",
-        "PasswordLength": "16",
-        "PasswordAllowedCharacters": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789",
+        "PasswordLength": "[parameters('PasswordLength')]",
+        "PasswordAllowedCharacters": "[parameters('PasswordAllowedCharacters')]",
         "LogAnalyticsWorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', variables('KeyVaultAppSettingsName'))]",
         "LogAnalyticsWorkspaceSharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', variables('KeyVaultAppSettingsName'))]",
         "LogTypeClient": "CloudLAPSClient"
