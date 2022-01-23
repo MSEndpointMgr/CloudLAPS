@@ -130,9 +130,9 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   }
 }
 
-//var KeyVaultUri = KeyVault.properties.vaultUri
-//var KeyVaultUriNoSlash = substring(KeyVaultUri, 0, length(KeyVaultUri)-1)
-var kvUri = uri(KeyVault.properties.vaultUri, '')
+var KeyVaultUri = KeyVault.properties.vaultUri
+var KeyVaultUriNoSlash = substring(KeyVaultUri, 0, length(KeyVaultUri)-1)
+//var kvUri = uri(KeyVault.properties.vaultUri, '')
 
 // Construct appSettings resource for CloudLAPS Portal and ensure default values including new ones are added
 resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
@@ -143,7 +143,7 @@ resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
       APPINSIGHTS_INSTRUMENTATIONKEY: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
       'AzureAd:TenantId': subscription().tenantId
       'AzureAd:ClientId': ApplicationID
-      'KeyVault:Uri': kvUri
+      'KeyVault:Uri': KeyVaultUriNoSlash
       'LogAnalytics:WorkspaceId': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceId)'
       'LogAnalytics:SharedKey': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
       'LogAnalytics:LogType': 'CloudLAPSAudit'
