@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "493673872450183720"
+      "templateHash": "11279002633507567880"
     }
   },
   "parameters": {
@@ -50,6 +50,20 @@
       "defaultValue": "3",
       "metadata": {
         "description": "Provide the number of days when password rotation is allowed. Default is 3."
+      }
+    },
+    "PasswordLength": {
+      "type": "string",
+      "defaultValue": "16",
+      "metadata": {
+        "description": "Provide the default length of the generated local admin password. Default is 16."
+      }
+    },
+    "PasswordAllowedCharacters": {
+      "type": "string",
+      "defaultValue": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789",
+      "metadata": {
+        "description": "Provide the default character set to be used when generating the local admin password. Default is value is ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789."
       }
     }
   },
@@ -137,8 +151,8 @@
         "UpdateFrequencyDays": "[parameters('UpdateFrequencyDays')]",
         "KeyVaultName": "[parameters('KeyVaultName')]",
         "DebugLogging": "False",
-        "PasswordLength": "16",
-        "PasswordAllowedCharacters": "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789",
+        "PasswordLength": "[parameters('PasswordLength')]",
+        "PasswordAllowedCharacters": "[parameters('PasswordAllowedCharacters')]",
         "LogAnalyticsWorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', variables('KeyVaultAppSettingsName'))]",
         "LogAnalyticsWorkspaceSharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', variables('KeyVaultAppSettingsName'))]",
         "LogTypeClient": "CloudLAPSClient"
@@ -154,7 +168,7 @@
         "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName')), '2020-02-02-preview').InstrumentationKey]",
         "AzureAd:TenantId": "[subscription().tenantId]",
         "AzureAd:ClientId": "[parameters('ApplicationID')]",
-        "KeyVault:Uri": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName')), '2019-09-01').vaultUri]",
+        "KeyVault:Uri": "[substring(reference(resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName')), '2019-09-01').vaultUri, 0, sub(length(reference(resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName')), '2019-09-01').vaultUri), 1))]",
         "LogAnalytics:WorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', variables('KeyVaultAppSettingsName'))]",
         "LogAnalytics:SharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', variables('KeyVaultAppSettingsName'))]",
         "LogAnalytics:LogType": "CloudLAPSAudit"

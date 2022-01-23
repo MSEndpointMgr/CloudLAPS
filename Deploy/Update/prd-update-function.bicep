@@ -13,12 +13,15 @@ param StorageAccountName string
 param ApplicationID string
 @description('Provide the number of days when password rotation is allowed. Default is 3.')
 param UpdateFrequencyDays string = '3'
+@description('Provide the default length of the generated local admin password. Default is 16.')
+param PasswordLength string = '16'
+@description('Provide the default character set to be used when generating the local admin password. Default is value is ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789.')
+param PasswordAllowedCharacters string = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
 
 // Automatically construct variables based on param input
 var FunctionAppInsightsName = '${FunctionAppName}-fa-ai'
 var PortalAppInsightsName = '${FunctionAppName}-wa-ai'
 var KeyVaultAppSettingsName = '${take(KeyVaultName, 21)}-as'
-
 
 // Define existing resources based on param input
 resource FunctionApp 'Microsoft.Web/sites@2020-12-01' existing = { 
@@ -42,6 +45,14 @@ resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02
 resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' existing = {
   name: PortalAppInsightsName
 }
+
+// Collect Log Analytics workspace properties to be added to Key Vault as secrets
+var LogAnalyticsWorkspaceId = LogAnalyticsWorkspace.properties.customerId
+var LogAnalyticsWorkspaceSharedKey = LogAnalyticsWorkspace.listKeys().primarySharedKey
+
+// Remove trailing forward slash from Key Vault uri property
+var KeyVaultUri = KeyVault.properties.vaultUri
+var KeyVaultUriNoSlash = substring(KeyVaultUri, 0, length(KeyVaultUri)-1)
 
 // Create Key Vault for Function App application settings
 resource KeyVaultAppSettings 'Microsoft.KeyVault/vaults@2019-09-01' = {
@@ -78,10 +89,6 @@ resource KeyVaultAppSettings 'Microsoft.KeyVault/vaults@2019-09-01' = {
     }
   }
 }
-
-// Collect Log Analytics workspace properties to be added to Key Vault as secrets
-var LogAnalyticsWorkspaceId = LogAnalyticsWorkspace.properties.customerId
-var LogAnalyticsWorkspaceSharedKey = LogAnalyticsWorkspace.listKeys().primarySharedKey
 
 // Construct secrets in Key Vault
 resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
@@ -122,8 +129,8 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
     UpdateFrequencyDays: UpdateFrequencyDays
     KeyVaultName: KeyVaultName
     DebugLogging: 'False'
-    PasswordLength: '16'
-    PasswordAllowedCharacters: 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
+    PasswordLength: PasswordLength
+    PasswordAllowedCharacters: PasswordAllowedCharacters
     LogAnalyticsWorkspaceId: '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceId)'
     LogAnalyticsWorkspaceSharedKey: '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
     LogTypeClient: 'CloudLAPSClient'
@@ -139,7 +146,7 @@ resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
       APPINSIGHTS_INSTRUMENTATIONKEY: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
       'AzureAd:TenantId': subscription().tenantId
       'AzureAd:ClientId': ApplicationID
-      'KeyVault:Uri': KeyVault.properties.vaultUri
+      'KeyVault:Uri': KeyVaultUriNoSlash
       'LogAnalytics:WorkspaceId': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceId)'
       'LogAnalytics:SharedKey': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
       'LogAnalytics:LogType': 'CloudLAPSAudit'
