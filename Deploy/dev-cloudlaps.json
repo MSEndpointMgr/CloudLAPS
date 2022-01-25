@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "2065708122408770727"
+      "templateHash": "1502488081197035152"
     }
   },
   "parameters": {
@@ -353,6 +353,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', parameters('FunctionAppName'))]",
         "[resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName'))]",
+        "[resourceId('Microsoft.Web/sites/extensions', parameters('FunctionAppName'), 'ZipDeploy')]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]"
       ]
     },
@@ -374,7 +375,8 @@
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName'))]",
         "[resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName'))]",
-        "[resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash'))]"
+        "[resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash'))]",
+        "[resourceId('Microsoft.Web/sites/extensions', variables('PortalWebAppNameNoDash'), 'ZipDeploy')]"
       ]
     },
     {

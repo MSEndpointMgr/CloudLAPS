@@ -293,6 +293,9 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
     LogAnalyticsWorkspaceSharedKey: '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
     LogTypeClient: 'CloudLAPSClient'
   }
+  dependsOn: [
+    FunctionAppZipDeploy
+  ]
 }
 
 // Deploy application settings for CloudLAPS Portal
@@ -309,6 +312,9 @@ resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
       'LogAnalytics:SharedKey': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
       'LogAnalytics:LogType': 'CloudLAPSAudit'
   }
+  dependsOn: [
+    PortalZipDeploy
+  ]
 }
 
 // Add ZipDeploy for Function App
