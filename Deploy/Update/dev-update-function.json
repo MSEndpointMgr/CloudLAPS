@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "11279002633507567880"
+      "templateHash": "7222743972773789022"
     }
   },
   "parameters": {
@@ -156,7 +156,10 @@
         "LogAnalyticsWorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', variables('KeyVaultAppSettingsName'))]",
         "LogAnalyticsWorkspaceSharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', variables('KeyVaultAppSettingsName'))]",
         "LogTypeClient": "CloudLAPSClient"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/extensions', parameters('FunctionAppName'), 'ZipDeploy')]"
+      ]
     },
     {
       "type": "Microsoft.Web/sites/config",

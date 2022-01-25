@@ -135,6 +135,9 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
     LogAnalyticsWorkspaceSharedKey: '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
     LogTypeClient: 'CloudLAPSClient'
   }
+  dependsOn: [
+    FunctionAppZipDeploy
+  ]
 }
 
 // Construct appSettings resource for CloudLAPS Portal and ensure default values including new ones are added
