@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "1502488081197035152"
+      "templateHash": "10904857489754353275"
     }
   },
   "parameters": {
@@ -154,12 +154,64 @@
           "ftpsState": "Disabled",
           "minTlsVersion": "1.2",
           "powerShellVersion": "~7",
-          "scmType": "None"
+          "scmType": "None",
+          "appSettings": [
+            {
+              "name": "AzureWebJobsDashboard",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', variables('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName')), '2021-02-01').keys[0].value)]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', variables('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName')), '2021-02-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', variables('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName')), '2021-02-01').keys[0].value)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTSHARE",
+              "value": "[toLower('CloudLAPS')]"
+            },
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "1"
+            },
+            {
+              "name": "AzureWebJobsDisableHomepage",
+              "value": "true"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_PROCESS_COUNT",
+              "value": "3"
+            },
+            {
+              "name": "PSWorkerInProcConcurrencyUpperBound",
+              "value": "10"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').InstrumentationKey]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').ConnectionString]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "powershell"
+            }
+          ]
         }
       },
       "tags": "[parameters('Tags')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('FunctionAppServicePlanName'))]"
+        "[resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('FunctionAppServicePlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName'))]"
       ]
     },
     {
