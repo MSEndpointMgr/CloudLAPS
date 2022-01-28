@@ -110,6 +110,56 @@ resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
       minTlsVersion: '1.2'
       powerShellVersion: '~7'
       scmType: 'None'
+      appSettings: [
+        {
+          name: 'AzureWebJobsDashboard'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
+        }
+        {
+          name: 'AzureWebJobsStorage'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
+        }
+        {
+          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
+        }
+        {
+          name: 'WEBSITE_CONTENTSHARE'
+          value: toLower('CloudLAPS')
+        }
+        {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
+        }
+        {
+          name: 'AzureWebJobsDisableHomepage'
+          value: 'true'
+        }
+        {
+          name: 'FUNCTIONS_EXTENSION_VERSION'
+          value: '~3'
+        }
+        {
+          name: 'FUNCTIONS_WORKER_PROCESS_COUNT'
+          value: '3'
+        }
+        {
+          name: 'PSWorkerInProcConcurrencyUpperBound'
+          value: '10'
+        }
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
+        }
+        {
+          name: 'FUNCTIONS_WORKER_RUNTIME'
+          value: 'powershell'
+        }
+      ]
     }
   }
   tags: Tags
@@ -322,7 +372,7 @@ resource FunctionAppZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
     parent: FunctionApp
     name: 'ZipDeploy'
     properties: {
-        packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip'
+        packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-FunctionApp1.1.0.zip'
     }
 }
 
