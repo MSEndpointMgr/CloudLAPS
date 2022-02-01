@@ -579,7 +579,7 @@
                 {
                   "type": 1,
                   "content": {
-                    "json": "## Report Disabled\r\n\r\n### Required Log Analytics Link \r\n\r\nCloudLAPS web portal sign in reports require access to read the AAD SignIn logs. Please link the Log Analytics Workspace containing these logs, and ensure that users have sufficient permissions to read from the SigIn log.\r\n\r\n",
+                    "json": "## Report Disabled\r\n\r\n### Required Log Analytics Link \r\n\r\nCloudLAPS web portal sign in reports require access to read the AAD SignIn logs. Please link the Log Analytics Workspace containing these logs, and ensure that users have sufficient permissions to read from the Sign-In log.\r\n\r\n",
                     "style": "warning"
                   },
                   "conditionalVisibility": {
