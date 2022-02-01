@@ -325,6 +325,9 @@ Process {
         # Initiate exit code variable with default value if not errors are caught
         $ExitCode = 0
 
+        # Initiate extended output variable
+        $ExtendedOutput = [string]::Empty
+
         # Use TLS 1.2 connection when calling Azure Function
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -356,8 +359,8 @@ Process {
                                 Add-LocalGroupMember -SID $Group -Member $LocalAdministratorName -ErrorAction Stop
                             }
 
-                            # Write output for extended details in MEM portal
-                            Write-Output -InputObject "AdminAccountCreated"
+                            # Handle output for extended details in MEM portal
+                            $ExtendedOutput = "AdminAccountCreated"
                         }
                         catch [System.Exception] {
                             Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 23 -Message "CloudLAPS: Failed to add '$($LocalAdministratorName)' user account as a member of local '$($GroupName)' group. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
@@ -380,8 +383,8 @@ Process {
                             Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -UserMayChangePassword $false -ErrorAction Stop
                         }
                         
-                        # Write output for extended details in MEM portal
-                        Write-Output -InputObject "PasswordRotated"
+                        # Handle output for extended details in MEM portal
+                        $ExtendedOutput = "PasswordRotated"
                     }
                     catch [System.Exception] {
                         Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 31 -Message "CloudLAPS: Failed to rotate password for '$($LocalAdministratorName)' local user account. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
@@ -411,28 +414,28 @@ Process {
         catch [System.Exception] {
             switch ($PSItem.Exception.Response.StatusCode) {
                 "Forbidden" {
-                    # Write output for extended details in MEM portal
+                    # Handle output for extended details in MEM portal
                     $FailureResult = "NotAllowed"
                     $FailureMessage = "Password rotation not allowed"
-                    Write-Output -InputObject $FailureResult
+                    $ExtendedOutput = $FailureResult
 
                     # Write to event log and set exit code
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Warning -EventId 14 -Message "CloudLAPS: Forbidden, password was not allowed to be updated"; $ExitCode = 0
                 }
                 "BadRequest" {
-                    # Write output for extended details in MEM portal
+                    # Handle output for extended details in MEM portal
                     $FailureResult = "BadRequest"
                     $FailureMessage = "Password rotation failed with BadRequest"
-                    Write-Output -InputObject $FailureResult
+                    $ExtendedOutput = $FailureResult
 
                     # Write to event log and set exit code
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 15 -Message "CloudLAPS: BadRequest, failed to update password"; $ExitCode = 1
                 }
                 default {
-                    # Write output for extended details in MEM portal
+                    # Handle output for extended details in MEM portal
                     $FailureResult = "Failed"
                     $FailureMessage = "Password rotation failed with unknown reason"
-                    Write-Output -InputObject $FailureResult
+                    $ExtendedOutput = $FailureResult
 
                     # Write to event log and set exit code
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 12 -Message "CloudLAPS: Call to Azure Function URI failed. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
@@ -459,9 +462,12 @@ Process {
     else {
         Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 1 -Message "CloudLAPS: Azure AD device registration failed, device is not Azure AD joined or Hybrid Azure AD joined"; $ExitCode = 1
 
-        # Write output for extended details in MEM portal
-        Write-Output -InputObject "DeviceRegistrationTestFailed"
+        # Handle output for extended details in MEM portal
+        $ExtendedOutput = "DeviceRegistrationTestFailed"
     }
+
+    # Write output for extended details in MEM portal
+    Write-Output -InputObject $ExtendedOutput
 
     # Handle exit code
     exit $ExitCode
