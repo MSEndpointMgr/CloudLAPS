@@ -154,6 +154,9 @@ resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
       'LogAnalytics:SharedKey': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
       'LogAnalytics:LogType': 'CloudLAPSAudit'
   }
+  dependsOn: [
+    PortalZipDeploy
+  ]
 }
 
 // Add ZipDeploy for Function App
@@ -162,5 +165,14 @@ resource FunctionAppZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
   name: 'ZipDeploy'
   properties: {
       packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-FunctionApp1.1.0.zip'
+  }
+}
+
+// Add ZipDeploy for CloudLAPS Portal
+resource PortalZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
+  parent: PortalAppService
+  name: 'ZipDeploy'
+  properties: {
+      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-Portal1.1.0.zip'
   }
 }

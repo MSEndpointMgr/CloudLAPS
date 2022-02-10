@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1124.51302",
-      "templateHash": "7222743972773789022"
+      "version": "0.4.1008.15138",
+      "templateHash": "3937212445633841081"
     }
   },
   "parameters": {
@@ -67,6 +67,7 @@
       }
     }
   },
+  "functions": [],
   "variables": {
     "FunctionAppInsightsName": "[format('{0}-fa-ai', parameters('FunctionAppName'))]",
     "PortalAppInsightsName": "[format('{0}-wa-ai', parameters('FunctionAppName'))]",
@@ -175,7 +176,10 @@
         "LogAnalytics:WorkspaceId": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceId)', variables('KeyVaultAppSettingsName'))]",
         "LogAnalytics:SharedKey": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=LogAnalyticsWorkspaceSharedKey)', variables('KeyVaultAppSettingsName'))]",
         "LogAnalytics:LogType": "CloudLAPSAudit"
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/extensions', parameters('PortalWebAppName'), 'ZipDeploy')]"
+      ]
     },
     {
       "type": "Microsoft.Web/sites/extensions",
@@ -183,6 +187,14 @@
       "name": "[format('{0}/{1}', parameters('FunctionAppName'), 'ZipDeploy')]",
       "properties": {
         "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-FunctionApp1.1.0.zip"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/extensions",
+      "apiVersion": "2015-08-01",
+      "name": "[format('{0}/{1}', parameters('PortalWebAppName'), 'ZipDeploy')]",
+      "properties": {
+        "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-Portal1.1.0.zip"
       }
     }
   ]
