@@ -11,7 +11,7 @@
     {
       "type": 1,
       "content": {
-        "json": "## CloudLAPS Admin Dashboard\r\n\r\n#### CloudLAPS is a community developed solution, providing an end-to-end local administrator password solution (LAPS) for cloud managed devices\r\n\r\nThis solution provides the functionality of rotating the password for a given local administrator account on trusted devices using Proactive Remediation in Microsoft Intune. A trusted device in this sense means a device that is managed by Intune and joined to the organizations Azure AD tenant. \r\n\r\nApart from other community solutions similar to this solution, CloudLAPS provides access to retrieve the local administrator passwords through a web-based portal. Delegated access to the web portal is supported through the means of native Azure AD enterprise application management. Password retrieval through the web portal is automatically logged in a Log Analytics workspace for auditing purposes.\r\n\r\n<strong>Documentation site - https://msendpointmgr.com/cloudlaps</strong>"
+        "json": "## CloudLAPS Admin Dashboard\r\n\r\n#### CloudLAPS is a community developed solution, providing an end-to-end local administrator password solution (LAPS) for cloud managed devices\r\n\r\nThis solution provides the functionality of rotating the password for a given local administrator account on trusted devices using Proactive Remediation in Microsoft Intune. A trusted device in this sense means a device that is managed by Intune and joined to the organizations Azure AD tenant.\r\n\r\n<strong>Documentation site - https://msendpointmgr.com/cloudlaps</strong>"
       },
       "customWidth": "60",
       "name": "CloudLapsDescription"
@@ -22,6 +22,13 @@
         "version": "NotebookGroup/1.0",
         "groupType": "editable",
         "items": [
+          {
+            "type": 1,
+            "content": {
+              "json": "### Log Update Times"
+            },
+            "name": "Custom Log Header"
+          },
           {
             "type": 3,
             "content": {
@@ -96,8 +103,16 @@
             "id": "44d58baf-be8f-4e69-9eaa-2d3fa8ee1cdc",
             "cellValue": "selectedTab",
             "linkTarget": "parameter",
-            "linkLabel": "Web Portal Sign-In Details",
+            "linkLabel": "Web Portal Sign In Details",
             "subTarget": "WebSignin",
+            "style": "link"
+          },
+          {
+            "id": "646706c9-7db5-45b8-a1e0-04955d4526af",
+            "cellValue": "selectedTab",
+            "linkTarget": "parameter",
+            "linkLabel": "Web Portal Geo Location Sign In",
+            "subTarget": "GeoSignin",
             "style": "link"
           }
         ]
@@ -188,11 +203,13 @@
             "version": "KqlParameterItem/1.0",
             "name": "LogWorkspace",
             "type": 1,
-            "query": "resources\r\n| where name contains \"log-azuresentinel-prod\" and type == \"microsoft.operationalinsights/workspaces\"\r\n| project id",
+            "query": "resources\r\n| where name contains \"MSECloudLAPSWorkspace\" and type == \"microsoft.operationalinsights/workspaces\"\r\n| project id",
+            "crossComponentResources": [
+              "value::selected"
+            ],
             "isHiddenWhenLocked": true,
             "queryType": 1,
-            "resourceType": "microsoft.resourcegraph/resources",
-            "label": ""
+            "resourceType": "microsoft.resourcegraph/resources"
           },
           {
             "id": "860404ca-5e89-433c-9854-acb3bbb15941",
@@ -200,14 +217,24 @@
             "name": "DetailsWorkbook",
             "type": 1,
             "query": "resources\r\n| where type == \"microsoft.insights/workbooks\"\r\n| where properties.displayName has 'CloudLAPS-AdminDetails-Template'\r\n| extend path = trim('[]', id)\r\n| project path",
+            "crossComponentResources": [
+              "value::selected"
+            ],
             "isHiddenWhenLocked": true,
             "queryType": 1,
             "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "4174d3f3-ccb3-4cea-9026-fab11f14cf81",
+            "version": "KqlParameterItem/1.0",
+            "name": "AppRegistrationName",
+            "type": 1,
+            "isHiddenWhenLocked": true
           }
         ],
         "style": "pills",
-        "queryType": 1,
-        "resourceType": "microsoft.resourcegraph/resources"
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
       },
       "customWidth": "20",
       "name": "DateParameter"
@@ -227,7 +254,7 @@
                 {
                   "type": 1,
                   "content": {
-                    "json": "## Client Statistics\r\n\r\nThis section uses the CloudLAPSClient_CL log to display the current CloudLAPS health and management statistics of Windows client devices in your organization.\r\n\r\nPlease Note:\r\n- Client health Statistics are reported during proactive remediation schedules\r\n- By default clients rotate their password every 3 days",
+                    "json": "## Client Statistics\r\n\r\nThis section uses the CloudLAPSClient_CL log to display the current CloudLAPS health and management statistics of Windows client devices in your organization.\r\n\r\n<strong>Please Note:</strong>\r\n- Client health Statistics are reported during proactive remediation schedules\r\n- By default clients rotate their password every 3 days",
                     "style": "info"
                   },
                   "customWidth": "70",
@@ -241,7 +268,7 @@
                   "type": 3,
                   "content": {
                     "version": "KqlItem/1.0",
-                    "query": "CloudLAPSClient_CL \r\n| summarize arg_max(TimeGenerated, *) by SerialNumber_s\r\n| summarize count()\r\n| extend ['ClientState'] = \"Managed Client Devices\"",
+                    "query": "CloudLAPSClient_CL \r\n| summarize arg_max(TimeGenerated, *) by SerialNumber_s\r\n| summarize count()\r\n| extend ['ClientState'] = \"Unique Managed Devices\"",
                     "size": 3,
                     "aggregation": 3,
                     "title": "Device Stats - {TimeRange}",
@@ -288,7 +315,7 @@
                   "type": 3,
                   "content": {
                     "version": "KqlItem/1.0",
-                    "query": "CloudLAPSClient_CL \r\n| make-series Trend = count() default = 0 on TimeGenerated from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain} by PasswordRotationResult_s\r\n",
+                    "query": "CloudLAPSClient_CL \r\n| where isnotempty(SerialNumber_s)\r\n| make-series Trend = count() default = 0 on TimeGenerated from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain} by PasswordRotationResult_s\r\n",
                     "size": 1,
                     "aggregation": 5,
                     "title": "Password Rotation Stats  - {TimeRange}",
@@ -299,17 +326,8 @@
                     "queryType": 0,
                     "resourceType": "microsoft.operationalinsights/workspaces",
                     "visualization": "areachart",
-                    "gridSettings": {
-                      "labelSettings": [
-                        {
-                          "columnId": "Result_s",
-                          "label": "Status"
-                        },
-                        {
-                          "columnId": "count_",
-                          "label": "Count"
-                        }
-                      ]
+                    "tileSettings": {
+                      "showBorder": false
                     },
                     "chartSettings": {
                       "seriesLabelSettings": [
@@ -343,7 +361,7 @@
                   "type": 3,
                   "content": {
                     "version": "KqlItem/1.0",
-                    "query": "CloudLAPSClient_CL \r\n| summarize dcount(SerialNumber_s) by bin(TimeGenerated,1d)\r\n",
+                    "query": "CloudLAPSClient_CL\r\n| make-series Trend = dcount(SerialNumber_s) default = 0 on TimeGenerated from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain} \r\n",
                     "size": 1,
                     "aggregation": 5,
                     "title": "Managed Device Check-In Stats - {TimeRange}",
@@ -360,6 +378,10 @@
                           "seriesName": "dcount_SerialNumber_s",
                           "label": "Device Count",
                           "color": "green"
+                        },
+                        {
+                          "seriesName": "Trend",
+                          "color": "green"
                         }
                       ]
                     }
@@ -371,12 +393,12 @@
                   "type": 3,
                   "content": {
                     "version": "KqlItem/1.0",
-                    "query": "CloudLAPSClient_CL \r\n| project TimeGenerated, SerialNumber_s, Message, PasswordRotationResult_s, AzureADDeviceId_g, Type\r\n| order by TimeGenerated",
+                    "query": "CloudLAPSClient_CL \r\n| summarize arg_max(TimeGenerated,*) by SerialNumber_s, AzureADDeviceId_g, Message\r\n| project TimeGenerated, SerialNumber_s, Message, AzureADDeviceId_g\r\n| order by TimeGenerated",
                     "size": 1,
                     "showAnalytics": true,
-                    "title": "Client Details",
+                    "title": "Client Actions - Daily Summary",
                     "timeContext": {
-                      "durationMs": 2419200000
+                      "durationMs": 0
                     },
                     "timeContextFromParameter": "TimeRange",
                     "showExportToExcel": true,
@@ -385,6 +407,27 @@
                     "visualization": "table",
                     "gridSettings": {
                       "formatters": [
+                        {
+                          "columnMatch": "Message",
+                          "formatter": 18,
+                          "formatOptions": {
+                            "thresholdsOptions": "icons",
+                            "thresholdsGrid": [
+                              {
+                                "operator": "contains",
+                                "thresholdValue": "successfully",
+                                "representation": "success",
+                                "text": "{0}{1}"
+                              },
+                              {
+                                "operator": "Default",
+                                "thresholdValue": null,
+                                "representation": "1",
+                                "text": "{0}{1}"
+                              }
+                            ]
+                          }
+                        },
                         {
                           "columnMatch": "PasswordRotationResult_s",
                           "formatter": 18,
@@ -421,15 +464,11 @@
                         },
                         {
                           "columnId": "SerialNumber_s",
-                          "label": "Device Serial"
+                          "label": "Device Serial Number"
                         },
                         {
                           "columnId": "Message",
                           "label": "Proactive Remediation Output"
-                        },
-                        {
-                          "columnId": "PasswordRotationResult_s",
-                          "label": "Password Rotation Result"
                         }
                       ]
                     }
@@ -444,12 +483,12 @@
                   "type": 3,
                   "content": {
                     "version": "KqlItem/1.0",
-                    "query": "CloudLAPSClient_CL \r\n| join IntuneDevices on $left.SerialNumber_s == $right.SerialNumber\r\n| extend ResourceURL = strcat('https://endpoint.microsoft.com/#blade/Microsoft_Intune_Devices/DeviceSettingsBlade/overview/mdmDeviceId/',DeviceId)\r\n| project TimeGenerated, SerialNumber_s, Message, PasswordRotationResult_s, AzureADDeviceId_g, Type, ResourceURL\r\n| order by TimeGenerated",
+                    "query": "let Data = IntuneDevices\r\n| distinct SerialNumber, DeviceId;\r\nCloudLAPSClient_CL \r\n| join kind=rightouter Data on $left.SerialNumber_s == $right.SerialNumber\r\n| where isnotempty(SerialNumber_s)\r\n| extend ResourceURL = strcat('https://endpoint.microsoft.com/#blade/Microsoft_Intune_Devices/DeviceSettingsBlade/overview/mdmDeviceId/',DeviceId)\r\n| summarize arg_max(TimeGenerated,*) by SerialNumber, AzureADDeviceId_g, Message\r\n| project TimeGenerated, SerialNumber, Message, AzureADDeviceId_g, Type, ResourceURL\r\n| order by TimeGenerated desc",
                     "size": 1,
                     "showAnalytics": true,
-                    "title": "Client Details",
+                    "title": "Client Actions - Daily Summary",
                     "timeContext": {
-                      "durationMs": 2419200000
+                      "durationMs": 0
                     },
                     "timeContextFromParameter": "TimeRange",
                     "showExportToExcel": true,
@@ -459,12 +498,51 @@
                     "gridSettings": {
                       "formatters": [
                         {
+                          "columnMatch": "SerialNumber",
+                          "formatter": 1,
+                          "formatOptions": {
+                            "linkColumn": "ResourceURL",
+                            "linkTarget": "Url"
+                          }
+                        },
+                        {
+                          "columnMatch": "Message",
+                          "formatter": 18,
+                          "formatOptions": {
+                            "thresholdsOptions": "icons",
+                            "thresholdsGrid": [
+                              {
+                                "operator": "contains",
+                                "thresholdValue": "successfully",
+                                "representation": "success",
+                                "text": "{0}{1}"
+                              },
+                              {
+                                "operator": "Default",
+                                "thresholdValue": null,
+                                "representation": "1",
+                                "text": "{0}{1}"
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "columnMatch": "Type",
+                          "formatter": 5
+                        },
+                        {
+                          "columnMatch": "ResourceURL",
+                          "formatter": 5
+                        },
+                        {
                           "columnMatch": "SerialNumber_s",
                           "formatter": 1,
                           "formatOptions": {
                             "linkColumn": "ResourceURL",
-                            "linkTarget": "Url",
-                            "customColumnWidthSetting": "20ch"
+                            "linkTarget": "Url"
+                          },
+                          "tooltipFormat": {
+                            "tooltip": "Click here to view device details in the Microsoft Endpoint Manager Admin Center"
                           }
                         },
                         {
@@ -493,10 +571,6 @@
                               }
                             ]
                           }
-                        },
-                        {
-                          "columnMatch": "ResourceURL",
-                          "formatter": 5
                         }
                       ],
                       "filter": true,
@@ -506,23 +580,16 @@
                           "label": "Time Generated"
                         },
                         {
-                          "columnId": "SerialNumber_s",
-                          "label": "Device Serial"
-                        },
-                        {
                           "columnId": "Message",
                           "label": "Proactive Remediation Output"
                         },
                         {
-                          "columnId": "PasswordRotationResult_s",
-                          "label": "Password Rotation Result"
-                        },
-                        {
                           "columnId": "AzureADDeviceId_g",
-                          "label": "Azure AD Device ID"
+                          "label": "Azure AD DeviceID"
                         }
                       ]
-                    }
+                    },
+                    "sortBy": []
                   },
                   "conditionalVisibility": {
                     "parameterName": "IntuneDeviceCount",
@@ -563,14 +630,14 @@
                 {
                   "type": 1,
                   "content": {
-                    "json": "### Azure AD CloudLAPS SignIn Information\r\n\r\nBelow are details on web portal access for CloudLAPS admin password retreivals. \r\n\r\n<strong>Note:</strong> You should always ensure that your CloudLAPS web portal is secured by multifactor authentication, as accounts provide local administrative rights on your devices.\r\n\r\n",
+                    "json": "### CloudLAPS Portal Sign-In Information\r\n\r\nBelow are details on web portal access for CloudLAPS admin password retreivals. \r\n\r\n<strong>Note:</strong> You should always ensure that your CloudLAPS web portal is secured by multifactor authentication, as accounts provide local administrative rights on your devices.\r\n\r\n",
                     "style": "info"
                   },
                   "conditionalVisibility": {
                     "parameterName": "AADSignInLogCheck",
                     "comparison": "isNotEqualTo"
                   },
-                  "name": "SignIn Log Warning - Copy",
+                  "name": "SignIn Log Warning",
                   "styleSettings": {
                     "margin": "0",
                     "padding": "0"
@@ -579,7 +646,7 @@
                 {
                   "type": 1,
                   "content": {
-                    "json": "## Report Disabled\r\n\r\n### Required Log Analytics Link \r\n\r\nCloudLAPS web portal sign in reports require access to read the AAD SignIn logs. Please link the Log Analytics Workspace containing these logs, and ensure that users have sufficient permissions to read from the Sign-In log.\r\n\r\n",
+                    "json": "## Report Disabled\r\n\r\n### Required Log Analytics Link \r\n\r\nCloudLAPS web portal sign in reports require access to read the Azure AD Sign-In logs. Please link the Log Analytics Workspace containing these logs, and ensure that users have sufficient permissions to read from the Sig-In log.\r\n\r\n",
                     "style": "warning"
                   },
                   "conditionalVisibility": {
@@ -593,186 +660,86 @@
                   }
                 },
                 {
+                  "type": 1,
+                  "content": {
+                    "json": "## Report Disabled\r\n\r\n### Empty Sign-In data for given App Registration\r\n\r\nCloudLAPS web portal sign in reports require at least one sign-in event to have occurred for the report to display data. There was no sign-in data available for the specified app registration '{AppRegistrationName}'.\r\n\r\n",
+                    "style": "warning"
+                  },
+                  "conditionalVisibility": {
+                    "parameterName": "AADSignInLogCheck",
+                    "comparison": "isEqualTo",
+                    "value": "0"
+                  },
+                  "name": "SignIn Log Warning",
+                  "styleSettings": {
+                    "margin": "0",
+                    "padding": "0"
+                  }
+                },
+                {
                   "type": 3,
                   "content": {
                     "version": "KqlItem/1.0",
-                    "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d)..ago(0d))\r\n| where AppDisplayName == \"CloudLAPS Portal\"\r\n| summarize count() by User = UserPrincipalName, Location = tostring(LocationDetails.countryOrRegion)",
-                    "size": 0,
-                    "title": "Sign In Location Map",
+                    "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d) .. ago(0d))\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| extend Description = iif(ResultType == 0, \"Success\", \"Failure\")\r\n| make-series Trend = count() default = 0 on TimeGenerated from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain} by Description",
+                    "size": 1,
+                    "title": "Sign In Result",
                     "timeContext": {
                       "durationMs": 2419200000
                     },
                     "timeContextFromParameter": "TimeRange",
                     "queryType": 0,
                     "resourceType": "microsoft.operationalinsights/workspaces",
-                    "visualization": "map",
-                    "mapSettings": {
-                      "locInfo": "CountryRegion",
-                      "locInfoColumn": "Location",
-                      "sizeSettings": "count_",
-                      "sizeAggregation": "Sum",
-                      "labelSettings": "Location",
-                      "legendMetric": "count_",
-                      "legendAggregation": "Sum",
-                      "itemColorSettings": {
-                        "nodeColorField": "count_",
-                        "colorAggregation": "Sum",
-                        "type": "heatmap",
-                        "heatmapPalette": "redGreen"
-                      }
+                    "visualization": "areachart",
+                    "chartSettings": {
+                      "seriesLabelSettings": [
+                        {
+                          "seriesName": "Failure",
+                          "color": "red"
+                        },
+                        {
+                          "seriesName": "Success",
+                          "color": "green"
+                        }
+                      ]
                     }
                   },
-                  "customWidth": "50",
-                  "name": "Sign-In Locations",
-                  "styleSettings": {
-                    "margin": "15px",
-                    "padding": "15px"
-                  }
-                },
-                {
-                  "type": 12,
-                  "content": {
-                    "version": "NotebookGroup/1.0",
-                    "groupType": "editable",
-                    "items": [
-                      {
-                        "type": 3,
-                        "content": {
-                          "version": "KqlItem/1.0",
-                          "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d)..ago(0d))\r\n| where AppDisplayName == \"CloudLAPS Portal\"\r\n| summarize count() by Location = tostring(LocationDetails.countryOrRegion)",
-                          "size": 4,
-                          "title": "Top Sign-In Locations - Countries",
-                          "timeContext": {
-                            "durationMs": 2419200000
-                          },
-                          "timeContextFromParameter": "TimeRange",
-                          "queryType": 0,
-                          "resourceType": "microsoft.operationalinsights/workspaces",
-                          "visualization": "piechart",
-                          "chartSettings": {
-                            "showMetrics": false,
-                            "showLegend": true
-                          },
-                          "mapSettings": {
-                            "locInfo": "CountryRegion",
-                            "locInfoColumn": "Location",
-                            "sizeSettings": "count_",
-                            "sizeAggregation": "Sum",
-                            "labelSettings": "Location",
-                            "legendMetric": "count_",
-                            "legendAggregation": "Sum",
-                            "itemColorSettings": {
-                              "nodeColorField": "count_",
-                              "colorAggregation": "Sum",
-                              "type": "heatmap",
-                              "heatmapPalette": "redGreen"
-                            }
-                          }
-                        },
-                        "customWidth": "50",
-                        "name": "Top Sign-In Locations - Countries",
-                        "styleSettings": {
-                          "margin": "10px",
-                          "padding": "10px"
-                        }
-                      },
-                      {
-                        "type": 3,
-                        "content": {
-                          "version": "KqlItem/1.0",
-                          "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d)..ago(0d))\r\n| where AppDisplayName == \"CloudLAPS Portal\"\r\n| summarize count() by Cities = tostring(LocationDetails.city)",
-                          "size": 4,
-                          "title": "Top Sign-In Locations - Cities",
-                          "timeContext": {
-                            "durationMs": 604800000
-                          },
-                          "queryType": 0,
-                          "resourceType": "microsoft.operationalinsights/workspaces",
-                          "visualization": "piechart",
-                          "chartSettings": {
-                            "showMetrics": false,
-                            "showLegend": true
-                          },
-                          "mapSettings": {
-                            "locInfo": "CountryRegion",
-                            "locInfoColumn": "Location",
-                            "sizeSettings": "count_",
-                            "sizeAggregation": "Sum",
-                            "labelSettings": "Location",
-                            "legendMetric": "count_",
-                            "legendAggregation": "Sum",
-                            "itemColorSettings": {
-                              "nodeColorField": "count_",
-                              "colorAggregation": "Sum",
-                              "type": "heatmap",
-                              "heatmapPalette": "redGreen"
-                            }
-                          }
-                        },
-                        "customWidth": "50",
-                        "name": "Top Sign-In Locations - Cities",
-                        "styleSettings": {
-                          "margin": "10px",
-                          "padding": "10px"
-                        }
-                      },
-                      {
-                        "type": 3,
-                        "content": {
-                          "version": "KqlItem/1.0",
-                          "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d)..ago(0d))\r\n| where AppDisplayName == \"CloudLAPS Portal\"\r\n| summarize count() by IPAddress, Location = tostring(LocationDetails.countryOrRegion)\r\n| top 10 by IPAddress",
-                          "size": 3,
-                          "title": "Top IP Addresses",
-                          "queryType": 0,
-                          "resourceType": "microsoft.operationalinsights/workspaces",
-                          "visualization": "table",
-                          "gridSettings": {
-                            "formatters": [
-                              {
-                                "columnMatch": "count_",
-                                "formatter": 8,
-                                "formatOptions": {
-                                  "palette": "greenBlue"
-                                }
-                              }
-                            ],
-                            "labelSettings": [
-                              {
-                                "columnId": "count_",
-                                "label": "Count"
-                              }
-                            ]
-                          }
-                        },
-                        "name": "IP Address Top 10"
-                      }
-                    ]
-                  },
-                  "customWidth": "50",
-                  "name": "Geo Charts",
-                  "styleSettings": {
-                    "margin": "15px",
-                    "padding": "15px"
-                  }
+                  "name": "Sign In State Trend"
                 },
                 {
                   "type": 3,
                   "content": {
                     "version": "KqlItem/1.0",
-                    "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d)..ago(0d))\r\n| where AppDisplayName == \"CloudLAPS Portal\"\r\n| summarize count() by User = Identity, UserPrincipalName, Location = tostring(LocationDetails.countryOrRegion), City = tostring(LocationDetails.city),AppDisplayName, AppId, IPAddress, UserId, MultiFactor = tostring(Status.additionalDetails)\r\n| extend UserURL = strcat('https://portal.azure.com/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/Profile/userId',UserId)\r\n| extend ResourceURL = strcat('https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/',AppId)\r\n| extend IPLookupURL = strcat('https://whatismyipaddress.com/ip/',IPAddress)\r\n",
-                    "size": 0,
+                    "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d) .. ago(0d))\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| extend Description = iif(ResultType == 0, \"Success\", ResultDescription)\r\n| extend UserURL = strcat('https://portal.azure.com/#blade/Microsoft_AAD_IAM/UserDetailsMenuBlade/Profile/userId',UserId)\r\n| extend IPLookupURL = strcat('https://whatismyipaddress.com/ip/',IPAddress)\r\n| extend ResourceURL = strcat('https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/',AppId)\r\n| project\r\n    ResultType,\r\n    TimeGenerated,\r\n    User = Identity,\r\n    UserPrincipalName,\r\n    Location = tostring(LocationDetails.countryOrRegion),\r\n    City = tostring(LocationDetails.city),\r\n    AppDisplayName,\r\n    AppId,\r\n    IPAddress,\r\n    UserId,\r\n    Description,\r\n    UserURL,\r\n    IPLookupURL,\r\n    ResourceURL\r\n| order by TimeGenerated desc\r\n",
+                    "size": 3,
                     "showAnalytics": true,
-                    "title": "Sign In Details",
-                    "timeContext": {
-                      "durationMs": 0
-                    },
-                    "timeContextFromParameter": "TimeRange",
+                    "title": "Sign In Details - Previous 180 Days",
                     "showExportToExcel": true,
                     "queryType": 0,
                     "resourceType": "microsoft.operationalinsights/workspaces",
                     "visualization": "table",
                     "gridSettings": {
                       "formatters": [
+                        {
+                          "columnMatch": "ResultType",
+                          "formatter": 18,
+                          "formatOptions": {
+                            "thresholdsOptions": "icons",
+                            "thresholdsGrid": [
+                              {
+                                "operator": "==",
+                                "thresholdValue": "0",
+                                "representation": "success",
+                                "text": ""
+                              },
+                              {
+                                "operator": "Default",
+                                "thresholdValue": null,
+                                "representation": "4",
+                                "text": ""
+                              }
+                            ]
+                          }
+                        },
                         {
                           "columnMatch": "User",
                           "formatter": 1,
@@ -806,9 +773,17 @@
                                   "name": "TimeRange",
                                   "source": "parameter",
                                   "value": "TimeRange"
+                                },
+                                {
+                                  "name": "AppRegistrationName",
+                                  "source": "parameter",
+                                  "value": "AppRegistrationName"
                                 }
                               ]
                             }
+                          },
+                          "tooltipFormat": {
+                            "tooltip": "Click here to look up the user details in Azure AD"
                           }
                         },
                         {
@@ -833,6 +808,9 @@
                           "formatOptions": {
                             "linkColumn": "IPLookupURL",
                             "linkTarget": "Url"
+                          },
+                          "tooltipFormat": {
+                            "tooltip": "Click here to view IP lookup information on this IP"
                           }
                         },
                         {
@@ -840,37 +818,24 @@
                           "formatter": 5
                         },
                         {
-                          "columnMatch": "MultiFactor",
+                          "columnMatch": "Description",
                           "formatter": 18,
                           "formatOptions": {
                             "thresholdsOptions": "icons",
                             "thresholdsGrid": [
                               {
-                                "operator": "contains",
-                                "thresholdValue": "MFA requirement satisfied",
-                                "representation": "success",
-                                "text": "{0}{1}"
-                              },
-                              {
-                                "operator": "contains",
-                                "thresholdValue": "MFA success",
-                                "representation": "success",
+                                "operator": "!=",
+                                "thresholdValue": "Success",
+                                "representation": "2",
                                 "text": "{0}{1}"
                               },
                               {
                                 "operator": "Default",
                                 "thresholdValue": null,
-                                "representation": "2",
+                                "representation": "success",
                                 "text": "{0}{1}"
                               }
                             ]
-                          }
-                        },
-                        {
-                          "columnMatch": "count_",
-                          "formatter": 4,
-                          "formatOptions": {
-                            "palette": "blueGreen"
                           }
                         },
                         {
@@ -878,19 +843,32 @@
                           "formatter": 5
                         },
                         {
+                          "columnMatch": "IPLookupURL",
+                          "formatter": 5
+                        },
+                        {
                           "columnMatch": "ResourceURL",
                           "formatter": 5
                         },
                         {
-                          "columnMatch": "IPLookupURL",
-                          "formatter": 5
+                          "columnMatch": "count_",
+                          "formatter": 4,
+                          "formatOptions": {
+                            "palette": "blue"
+                          }
                         },
                         {
                           "columnMatch": "AdminDetailURL",
                           "formatter": 5
                         }
                       ],
+                      "rowLimit": 100,
+                      "filter": true,
                       "labelSettings": [
+                        {
+                          "columnId": "ResultType",
+                          "label": "Result"
+                        },
                         {
                           "columnId": "AppDisplayName",
                           "label": "Azure Application"
@@ -898,14 +876,6 @@
                         {
                           "columnId": "IPAddress",
                           "label": "IP Address"
-                        },
-                        {
-                          "columnId": "MultiFactor",
-                          "label": "MFA State"
-                        },
-                        {
-                          "columnId": "count_",
-                          "label": "Count"
                         }
                       ]
                     }
@@ -914,7 +884,7 @@
                 }
               ]
             },
-            "name": "Geographic Reports",
+            "name": "Sign In Reports",
             "styleSettings": {
               "margin": "15px",
               "padding": "15px",
@@ -954,14 +924,13 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "CloudLAPSAudit_CL\r\n| make-series Trend = count() default = 0 on TimeGenerated from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain} by UserPrincipalName_s",
+              "query": "CloudLAPSAudit_CL\r\n| make-series Trend = count() default = 0 on TimeGenerated from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain} by SerialNumber_s, UserPrincipalName_s",
               "size": 4,
               "title": "CloudLAPS Admin Password Retrieval - By Admin - {TimeRange}",
               "timeContext": {
                 "durationMs": 2419200000
               },
               "timeContextFromParameter": "TimeRange",
-              "showExportToExcel": true,
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
               "visualization": "areachart",
@@ -978,7 +947,15 @@
                 ]
               },
               "chartSettings": {
+                "group": "UserPrincipalName_s",
+                "createOtherGroup": null,
                 "showMetrics": false,
+                "seriesLabelSettings": [
+                  {
+                    "seriesName": "<empty>",
+                    "color": "green"
+                  }
+                ],
                 "customThresholdLine": "2",
                 "customThresholdLineStyle": 0
               }
@@ -993,25 +970,22 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "CloudLAPSAudit_CL\r\n| join IntuneDevices on $left.SerialNumber_s == $right.SerialNumber\r\n| extend ResourceURL = strcat('https://endpoint.microsoft.com/#blade/Microsoft_Intune_Devices/DeviceSettingsBlade/overview/mdmDeviceId/',DeviceId)\r\n| summarize count() by TimeGenerated, ComputerName_s, UserName, UserPrincipalName_s, Action_s, Result_s, SerialNumber_s, DeviceId, ResourceURL, JoinType, ManagedBy, CompliantState\r\n| sort by TimeGenerated desc",
+              "query": "CloudLAPSAudit_CL\r\n| join kind = leftouter IntuneDevices on $left.AzureADDeviceId_g == $right.ReferenceId\r\n| extend ResourceURL = strcat('https://endpoint.microsoft.com/#blade/Microsoft_Intune_Devices/DeviceSettingsBlade/overview/mdmDeviceId/',DeviceId)\r\n| extend ADJoinType = iif(isempty(JoinType), \"Unknown\", JoinType)\r\n| project TimeGenerated, UserPrincipalName_s, ComputerName_s, UserName, Result_s, SerialNumber_s, DeviceId, ResourceURL, ADJoinType, ManagedBy, CompliantState\r\n| summarize arg_max(UserPrincipalName_s, *) by SerialNumber_s,TimeGenerated \r\n| sort by TimeGenerated desc\r\n",
               "size": 3,
+              "showAnalytics": true,
+              "title": "All Intune Active Devices - Password Requests",
               "timeContext": {
                 "durationMs": 2419200000
               },
               "timeContextFromParameter": "TimeRange",
-              "showRefreshButton": true,
               "showExportToExcel": true,
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
               "gridSettings": {
                 "formatters": [
                   {
-                    "columnMatch": "ComputerName_s",
-                    "formatter": 1,
-                    "formatOptions": {
-                      "linkColumn": "ResourceURL",
-                      "linkTarget": "Url"
-                    }
+                    "columnMatch": "SerialNumber_s",
+                    "formatter": 5
                   },
                   {
                     "columnMatch": "UserPrincipalName_s",
@@ -1052,6 +1026,34 @@
                     }
                   },
                   {
+                    "columnMatch": "ComputerName_s",
+                    "formatter": 1,
+                    "formatOptions": {
+                      "linkColumn": "ResourceURL",
+                      "linkTarget": "Url"
+                    }
+                  },
+                  {
+                    "columnMatch": "UserName",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "is Empty",
+                          "representation": "unknown",
+                          "text": "Unknown"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "Person",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
+                  },
+                  {
                     "columnMatch": "Result_s",
                     "formatter": 18,
                     "formatOptions": {
@@ -1067,16 +1069,32 @@
                     }
                   },
                   {
-                    "columnMatch": "SerialNumber_s",
-                    "formatter": 5
-                  },
-                  {
                     "columnMatch": "DeviceId",
                     "formatter": 5
                   },
                   {
                     "columnMatch": "ResourceURL",
                     "formatter": 5
+                  },
+                  {
+                    "columnMatch": "ManagedBy",
+                    "formatter": 18,
+                    "formatOptions": {
+                      "thresholdsOptions": "icons",
+                      "thresholdsGrid": [
+                        {
+                          "operator": "is Empty",
+                          "representation": "Unknown",
+                          "text": "Unkown"
+                        },
+                        {
+                          "operator": "Default",
+                          "thresholdValue": null,
+                          "representation": "Blank",
+                          "text": "{0}{1}"
+                        }
+                      ]
+                    }
                   },
                   {
                     "columnMatch": "CompliantState",
@@ -1089,6 +1107,11 @@
                           "thresholdValue": "Compliant",
                           "representation": "success",
                           "text": "{0}{1}"
+                        },
+                        {
+                          "operator": "is Empty",
+                          "representation": "unknown",
+                          "text": "Unkown"
                         },
                         {
                           "operator": "Default",
@@ -1107,8 +1130,16 @@
                 "filter": true,
                 "labelSettings": [
                   {
+                    "columnId": "SerialNumber_s",
+                    "label": "Serial Number"
+                  },
+                  {
                     "columnId": "TimeGenerated",
                     "label": "Time Actioned"
+                  },
+                  {
+                    "columnId": "UserPrincipalName_s",
+                    "label": "Requested By"
                   },
                   {
                     "columnId": "ComputerName_s",
@@ -1116,23 +1147,31 @@
                   },
                   {
                     "columnId": "UserName",
-                    "label": "Device Primary User"
-                  },
-                  {
-                    "columnId": "UserPrincipalName_s",
-                    "label": "Requested By"
-                  },
-                  {
-                    "columnId": "Action_s",
-                    "label": "Action"
+                    "label": "Username"
                   },
                   {
                     "columnId": "Result_s",
                     "label": "Result"
                   },
                   {
-                    "columnId": "SerialNumber_s",
-                    "label": "Serial Number"
+                    "columnId": "DeviceId",
+                    "label": "Device ID"
+                  },
+                  {
+                    "columnId": "ResourceURL",
+                    "label": "Resource URL"
+                  },
+                  {
+                    "columnId": "ADJoinType",
+                    "label": "AD Join Type"
+                  },
+                  {
+                    "columnId": "ManagedBy",
+                    "label": "Managed By"
+                  },
+                  {
+                    "columnId": "CompliantState",
+                    "label": "Compliant State"
                   }
                 ]
               }
@@ -1151,26 +1190,19 @@
             "type": 3,
             "content": {
               "version": "KqlItem/1.0",
-              "query": "CloudLAPSAudit_CL\r\n| summarize count() by TimeGenerated, ComputerName_s, UserPrincipalName_s, Action_s, Result_s, SerialNumber_s\r\n| sort by TimeGenerated desc",
+              "query": "CloudLAPSAudit_CL\r\n| summarize count() by TimeGenerated, UserPrincipalName_s, SerialNumber_s, ComputerName_s, Action_s, Result_s\r\n| sort by TimeGenerated desc\r\n",
               "size": 3,
+              "showAnalytics": true,
+              "title": "All Devices - Password Requests",
               "timeContext": {
                 "durationMs": 2419200000
               },
               "timeContextFromParameter": "TimeRange",
-              "showRefreshButton": true,
               "showExportToExcel": true,
               "queryType": 0,
               "resourceType": "microsoft.operationalinsights/workspaces",
               "gridSettings": {
                 "formatters": [
-                  {
-                    "columnMatch": "ComputerName_s",
-                    "formatter": 1,
-                    "formatOptions": {
-                      "linkColumn": "ResourceURL",
-                      "linkTarget": "Url"
-                    }
-                  },
                   {
                     "columnMatch": "UserPrincipalName_s",
                     "formatter": 1,
@@ -1210,6 +1242,18 @@
                     }
                   },
                   {
+                    "columnMatch": "SerialNumber_s",
+                    "formatter": 1
+                  },
+                  {
+                    "columnMatch": "ComputerName_s",
+                    "formatter": 5,
+                    "formatOptions": {
+                      "linkColumn": "ResourceURL",
+                      "linkTarget": "Url"
+                    }
+                  },
+                  {
                     "columnMatch": "Result_s",
                     "formatter": 18,
                     "formatOptions": {
@@ -1223,10 +1267,6 @@
                         }
                       ]
                     }
-                  },
-                  {
-                    "columnMatch": "SerialNumber_s",
-                    "formatter": 5
                   },
                   {
                     "columnMatch": "count_",
@@ -1248,12 +1288,16 @@
                     "label": "Time Actioned"
                   },
                   {
-                    "columnId": "ComputerName_s",
-                    "label": "Device Name"
-                  },
-                  {
                     "columnId": "UserPrincipalName_s",
                     "label": "Requested By"
+                  },
+                  {
+                    "columnId": "SerialNumber_s",
+                    "label": "Device Serial Number"
+                  },
+                  {
+                    "columnId": "ComputerName_s",
+                    "label": "Device Name"
                   },
                   {
                     "columnId": "Action_s",
@@ -1262,10 +1306,6 @@
                   {
                     "columnId": "Result_s",
                     "label": "Result"
-                  },
-                  {
-                    "columnId": "SerialNumber_s",
-                    "label": "Serial Number"
                   }
                 ]
               }
@@ -1339,7 +1379,7 @@
               "size": 1,
               "aggregation": 5,
               "timeContext": {
-                "durationMs": 2419200000
+                "durationMs": 0
               },
               "timeContextFromParameter": "TimeRange",
               "queryType": 0,
@@ -1358,7 +1398,11 @@
                 ]
               }
             },
-            "name": "query - 2"
+            "conditionalVisibility": {
+              "parameterName": "DeviceSerial",
+              "comparison": "isNotEqualTo"
+            },
+            "name": "Client Health Details - Trend"
           },
           {
             "type": 3,
@@ -1369,7 +1413,7 @@
               "showAnalytics": true,
               "title": "Client Details",
               "timeContext": {
-                "durationMs": 2419200000
+                "durationMs": 0
               },
               "timeContextFromParameter": "TimeRange",
               "showExportToExcel": true,
@@ -1439,7 +1483,11 @@
                 ]
               }
             },
-            "name": "Client Health Details - Intune Link Enabled - Copy"
+            "conditionalVisibility": {
+              "parameterName": "DeviceSerial",
+              "comparison": "isNotEqualTo"
+            },
+            "name": "Client Health Details - Intune Link Enabled"
           }
         ]
       },
@@ -1454,6 +1502,266 @@
         "padding": "15px",
         "showBorder": true
       }
+    },
+    {
+      "type": 12,
+      "content": {
+        "version": "NotebookGroup/1.0",
+        "groupType": "editable",
+        "items": [
+          {
+            "type": 12,
+            "content": {
+              "version": "NotebookGroup/1.0",
+              "groupType": "editable",
+              "items": [
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "### CloudLAPS Geo Sign-In Information\r\n\r\nBelow are geo location details on web portal usage.\r\n\r\n",
+                    "style": "info"
+                  },
+                  "conditionalVisibility": {
+                    "parameterName": "AADSignInLogCheck",
+                    "comparison": "isNotEqualTo"
+                  },
+                  "name": "Geo Sign In Log Warning",
+                  "styleSettings": {
+                    "margin": "0",
+                    "padding": "0"
+                  }
+                },
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Report Disabled\r\n\r\n### Required Log Analytics Link \r\n\r\nCloudLAPS web portal sign in reports require access to read the Azure AD Sign-In logs. Please link the Log Analytics Workspace containing these logs, and ensure that users have sufficient permissions to read from the Sig-In log.\r\n\r\n",
+                    "style": "warning"
+                  },
+                  "conditionalVisibility": {
+                    "parameterName": "AADSignInLogCheck",
+                    "comparison": "isEqualTo"
+                  },
+                  "name": "Geo Sign In Log Warning",
+                  "styleSettings": {
+                    "margin": "0",
+                    "padding": "0"
+                  }
+                },
+                {
+                  "type": 1,
+                  "content": {
+                    "json": "## Report Disabled\r\n\r\n### Empty Sign-In data for given App Registration\r\n\r\nCloudLAPS web portal sign in reports require at least one sign-in event to have occurred for the report to display data. There was no sign-in data available for the specified app registration '{AppRegistrationName}'.\r\n\r\n",
+                    "style": "warning"
+                  },
+                  "conditionalVisibility": {
+                    "parameterName": "AADSignInLogCheck",
+                    "comparison": "isEqualTo",
+                    "value": "0"
+                  },
+                  "name": "Geo Sign In Log Warning - Copy",
+                  "styleSettings": {
+                    "margin": "0",
+                    "padding": "0"
+                  }
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d)..ago(0d))\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| summarize count() by User = UserPrincipalName, Location = tostring(LocationDetails.countryOrRegion), ResultType",
+                    "size": 0,
+                    "title": "Sign In Location Map",
+                    "timeContext": {
+                      "durationMs": 2419200000
+                    },
+                    "timeContextFromParameter": "TimeRange",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "visualization": "map",
+                    "mapSettings": {
+                      "locInfo": "CountryRegion",
+                      "locInfoColumn": "Location",
+                      "sizeSettings": "count_",
+                      "sizeAggregation": "Sum",
+                      "labelSettings": "Location",
+                      "legendMetric": "count_",
+                      "legendAggregation": "Sum",
+                      "itemColorSettings": {
+                        "nodeColorField": "count_",
+                        "colorAggregation": "Sum",
+                        "type": "heatmap",
+                        "heatmapPalette": "redGreen"
+                      }
+                    }
+                  },
+                  "customWidth": "60",
+                  "name": "Go Sign In Locations",
+                  "styleSettings": {
+                    "margin": "15px",
+                    "padding": "15px"
+                  }
+                },
+                {
+                  "type": 3,
+                  "content": {
+                    "version": "KqlItem/1.0",
+                    "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d)..ago(0d))\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| summarize count() by IPAddress, Location = tostring(LocationDetails.countryOrRegion)\r\n| extend IPLookupURL = strcat('https://whatismyipaddress.com/ip/',IPAddress)\r\n| extend Country = iif(Location == \"\", \"Unknown\", Location)\r\n| top 10 by IPAddress\r\n| project IPAddress, Country, count_\r\n| order by count_ desc",
+                    "size": 3,
+                    "title": "Top IP Addresses",
+                    "queryType": 0,
+                    "resourceType": "microsoft.operationalinsights/workspaces",
+                    "visualization": "table",
+                    "gridSettings": {
+                      "formatters": [
+                        {
+                          "columnMatch": "IPAddress",
+                          "formatter": 1,
+                          "formatOptions": {
+                            "linkColumn": "IPLookupURL",
+                            "linkTarget": "Url"
+                          }
+                        },
+                        {
+                          "columnMatch": "count_",
+                          "formatter": 4,
+                          "formatOptions": {
+                            "palette": "blue"
+                          }
+                        },
+                        {
+                          "columnMatch": "IPLookupURL",
+                          "formatter": 5
+                        }
+                      ],
+                      "labelSettings": [
+                        {
+                          "columnId": "count_",
+                          "label": "Count"
+                        }
+                      ]
+                    }
+                  },
+                  "customWidth": "40",
+                  "name": "Geo IP Address Top 10"
+                },
+                {
+                  "type": 12,
+                  "content": {
+                    "version": "NotebookGroup/1.0",
+                    "groupType": "editable",
+                    "items": [
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d)..ago(0d))\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| extend Country = iif(Location == \"\", \"Unknown\", Location)\r\n| summarize count() by Country",
+                          "size": 1,
+                          "title": "Top Sign-In Locations - Countries",
+                          "timeContext": {
+                            "durationMs": 2419200000
+                          },
+                          "timeContextFromParameter": "TimeRange",
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces",
+                          "visualization": "barchart",
+                          "chartSettings": {
+                            "showMetrics": false,
+                            "showLegend": true
+                          },
+                          "mapSettings": {
+                            "locInfo": "CountryRegion",
+                            "locInfoColumn": "Location",
+                            "sizeSettings": "count_",
+                            "sizeAggregation": "Sum",
+                            "labelSettings": "Location",
+                            "legendMetric": "count_",
+                            "legendAggregation": "Sum",
+                            "itemColorSettings": {
+                              "nodeColorField": "count_",
+                              "colorAggregation": "Sum",
+                              "type": "heatmap",
+                              "heatmapPalette": "redGreen"
+                            }
+                          }
+                        },
+                        "customWidth": "50",
+                        "name": "Top Sign-In Locations - Countries",
+                        "styleSettings": {
+                          "margin": "10px",
+                          "padding": "10px"
+                        }
+                      },
+                      {
+                        "type": 3,
+                        "content": {
+                          "version": "KqlItem/1.0",
+                          "query": "SigninLogs \r\n| where TimeGenerated between (ago(180d)..ago(0d))\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| summarize count() by Cities = tostring(LocationDetails.city)",
+                          "size": 1,
+                          "title": "Top Sign-In Locations - Cities",
+                          "timeContext": {
+                            "durationMs": 604800000
+                          },
+                          "queryType": 0,
+                          "resourceType": "microsoft.operationalinsights/workspaces",
+                          "visualization": "barchart",
+                          "chartSettings": {
+                            "showMetrics": false,
+                            "showLegend": true
+                          },
+                          "mapSettings": {
+                            "locInfo": "CountryRegion",
+                            "locInfoColumn": "Location",
+                            "sizeSettings": "count_",
+                            "sizeAggregation": "Sum",
+                            "labelSettings": "Location",
+                            "legendMetric": "count_",
+                            "legendAggregation": "Sum",
+                            "itemColorSettings": {
+                              "nodeColorField": "count_",
+                              "colorAggregation": "Sum",
+                              "type": "heatmap",
+                              "heatmapPalette": "redGreen"
+                            }
+                          }
+                        },
+                        "customWidth": "50",
+                        "name": "Top Sign-In Locations - Cities",
+                        "styleSettings": {
+                          "margin": "10px",
+                          "padding": "10px"
+                        }
+                      }
+                    ]
+                  },
+                  "name": "Geo Charts",
+                  "styleSettings": {
+                    "margin": "15px",
+                    "padding": "15px"
+                  }
+                }
+              ]
+            },
+            "name": "Geographic Reports",
+            "styleSettings": {
+              "margin": "15px",
+              "padding": "15px",
+              "showBorder": true
+            }
+          }
+        ]
+      },
+      "conditionalVisibilities": [
+        {
+          "parameterName": "AADSignInLogCheck",
+          "comparison": "isNotEqualTo"
+        },
+        {
+          "parameterName": "selectedTab",
+          "comparison": "isEqualTo",
+          "value": "GeoSignin"
+        }
+      ],
+      "name": "Web Portal Geo Sign In Information"
     }
   ],
   "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"

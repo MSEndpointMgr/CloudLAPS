@@ -89,20 +89,27 @@
             "timeContext": {
               "durationMs": 86400000
             }
+          },
+          {
+            "id": "4d23d49f-b283-41a6-bc7e-e885368d129c",
+            "version": "KqlParameterItem/1.0",
+            "name": "AppRegistrationName",
+            "type": 1,
+            "isHiddenWhenLocked": true
           }
         ],
         "style": "above",
         "queryType": 0,
         "resourceType": "microsoft.operationalinsights/workspaces"
       },
-      "name": "parameters - 2"
+      "name": "Template Parameters"
     },
     {
       "type": 1,
       "content": {
         "json": "## Admin User Details - {TimeRange}\n\n---\n\n<table class=\"tg\">\n<thead>\n  <tr>\n    <th class=\"tg-0lax\" colspan=\"2\">Account Information</th>\n  </tr>\n</thead>\n<tbody>\n  <tr>\n    <td class=\"tg-0lax\">User</td>\n    <td class=\"tg-0lax\">{User}</td>\n  </tr>\n  <tr>\n    <td class=\"tg-0lax\">UserPrincipalName</td>\n    <td class=\"tg-0lax\">{UserPrincipalName}</td>\n  </tr>\n</tbody>\n</table>\n\n---\n\nBelow are detailed sign in details for the selected admin account."
       },
-      "name": "text - 2"
+      "name": "Admin User Details"
     },
     {
       "type": 3,
@@ -117,10 +124,6 @@
         },
         "queryType": 0,
         "resourceType": "microsoft.operationalinsights/workspaces",
-        "crossComponentResources": [
-          "/subscriptions/fa40cbe0-4fea-4841-a5b5-bbd1a417c840/resourceGroups/rg-azuresentinel-prod-001/providers/Microsoft.OperationalInsights/workspaces/log-azuresentinel-prod",
-          "/subscriptions/fa40cbe0-4fea-4841-a5b5-bbd1a417c840/resourceGroups/rg-cloudlaps/providers/Microsoft.OperationalInsights/workspaces/log-dornan-cloudlaps"
-        ],
         "visualization": "timechart"
       },
       "name": "Admin Password Retrievals"
@@ -129,7 +132,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "SigninLogs \r\n| where UserPrincipalName contains \"{UserPrincipalName}\"\r\n| where AppDisplayName == \"CloudLAPS Portal\"\r\n| summarize count() by  City = tostring(LocationDetails.city), Location = tostring(LocationDetails.countryOrRegion)\r\n| top 10 by City",
+        "query": "SigninLogs \r\n| where UserPrincipalName contains \"{UserPrincipalName}\"\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| summarize count() by  City = tostring(LocationDetails.city), Location = tostring(LocationDetails.countryOrRegion)\r\n| top 10 by City",
         "size": 3,
         "title": "Sign Ins - Top Locations",
         "timeContextFromParameter": "TimeRange",
@@ -143,7 +146,7 @@
       "type": 3,
       "content": {
         "version": "KqlItem/1.0",
-        "query": "SigninLogs \r\n| where UserPrincipalName contains \"adm\"\r\n| where AppDisplayName == \"CloudLAPS Portal\"\r\n| project TimeGenerated, UserPrincipalName, MultiFactor = tostring(Status.additionalDetails)\r\n| order by TimeGenerated desc",
+        "query": "SigninLogs \r\n| where UserPrincipalName contains \"{UserPrincipalName}\"\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| project TimeGenerated, UserPrincipalName, MultiFactor = tostring(Status.additionalDetails)\r\n| order by TimeGenerated desc",
         "size": 1,
         "title": "Sign In History",
         "timeContext": {
@@ -152,10 +155,6 @@
         "showExportToExcel": true,
         "queryType": 0,
         "resourceType": "microsoft.operationalinsights/workspaces",
-        "crossComponentResources": [
-          "/subscriptions/fa40cbe0-4fea-4841-a5b5-bbd1a417c840/resourceGroups/rg-azuresentinel-prod-001/providers/Microsoft.OperationalInsights/workspaces/log-azuresentinel-prod",
-          "/subscriptions/fa40cbe0-4fea-4841-a5b5-bbd1a417c840/resourceGroups/rg-cloudlaps/providers/Microsoft.OperationalInsights/workspaces/log-dornan-cloudlaps"
-        ],
         "gridSettings": {
           "formatters": [
             {
@@ -177,12 +176,18 @@
                     "text": "{0}{1}"
                   },
                   {
+                    "operator": "is Empty",
+                    "representation": "Unknown",
+                    "text": "Unknown MFA Status"
+                  },
+                  {
                     "operator": "Default",
                     "thresholdValue": null,
                     "representation": "2",
                     "text": "{0}{1}"
                   }
-                ]
+                ],
+                "customColumnWidthSetting": "40ch"
               }
             }
           ]
