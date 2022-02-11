@@ -381,6 +381,6 @@ resource PortalZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
   parent: PortalAppService
   name: 'ZipDeploy'
   properties: {
-      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-Portal1.0.0.zip'
+      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-Portal1.1.0.zip'
   }
 }

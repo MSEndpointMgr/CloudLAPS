@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1124.51302",
-      "templateHash": "10904857489754353275"
+      "version": "0.4.1008.15138",
+      "templateHash": "339429216216836007"
     }
   },
   "parameters": {
@@ -84,6 +84,7 @@
       }
     }
   },
+  "functions": [],
   "variables": {
     "UniqueString": "[uniqueString(resourceGroup().id)]",
     "FunctionAppNameNoDash": "[replace(parameters('FunctionAppName'), '-', '')]",
@@ -447,7 +448,7 @@
       "apiVersion": "2015-08-01",
       "name": "[format('{0}/{1}', variables('PortalWebAppNameNoDash'), 'ZipDeploy')]",
       "properties": {
-        "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-Portal1.0.0.zip"
+        "packageUri": "https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-Portal1.1.0.zip"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash'))]"
