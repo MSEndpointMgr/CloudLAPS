@@ -14,7 +14,7 @@
         "json": "## CloudLAPS Admin Dashboard\r\n\r\n#### CloudLAPS is a community developed solution, providing an end-to-end local administrator password solution (LAPS) for cloud managed devices\r\n\r\nThis solution provides the functionality of rotating the password for a given local administrator account on trusted devices using Proactive Remediation in Microsoft Intune. A trusted device in this sense means a device that is managed by Intune and joined to the organizations Azure AD tenant.\r\n\r\n<strong>Documentation site - https://msendpointmgr.com/cloudlaps</strong>"
       },
       "customWidth": "60",
-      "name": "CloudLapsDescription"
+      "name": "CloudLAPSDescription"
     },
     {
       "type": 12,
@@ -133,7 +133,7 @@
             "type": 4,
             "isRequired": true,
             "value": {
-              "durationMs": 2419200000
+              "durationMs": 7776000000
             },
             "typeSettings": {
               "selectableValues": [
@@ -193,8 +193,9 @@
             "query": "SigninLogs\r\n| summarize arg_max(TimeGenerated, *) by UserPrincipalName\r\n| summarize dcount(UserPrincipalName) by bin (TimeGenerated, 1d)\r\n| project dcount_UserPrincipalName",
             "isHiddenWhenLocked": true,
             "timeContext": {
-              "durationMs": 43200000
+              "durationMs": 0
             },
+            "timeContextFromParameter": "TimeRange",
             "queryType": 0,
             "resourceType": "microsoft.operationalinsights/workspaces"
           },
@@ -229,7 +230,8 @@
             "version": "KqlParameterItem/1.0",
             "name": "AppRegistrationName",
             "type": 1,
-            "isHiddenWhenLocked": true
+            "isHiddenWhenLocked": true,
+            "value": ""
           }
         ],
         "style": "pills",
@@ -244,6 +246,7 @@
       "content": {
         "version": "NotebookGroup/1.0",
         "groupType": "editable",
+        "loadType": "always",
         "items": [
           {
             "type": 12,
@@ -273,7 +276,7 @@
                     "aggregation": 3,
                     "title": "Device Stats - {TimeRange}",
                     "timeContext": {
-                      "durationMs": 2419200000
+                      "durationMs": 7776000000
                     },
                     "timeContextFromParameter": "TimeRange",
                     "queryType": 0,
@@ -320,7 +323,7 @@
                     "aggregation": 5,
                     "title": "Password Rotation Stats  - {TimeRange}",
                     "timeContext": {
-                      "durationMs": 2419200000
+                      "durationMs": 7776000000
                     },
                     "timeContextFromParameter": "TimeRange",
                     "queryType": 0,
@@ -355,7 +358,7 @@
                     }
                   },
                   "customWidth": "50",
-                  "name": "CloudLaps Password Rotation"
+                  "name": "CloudLAPS Password Rotation"
                 },
                 {
                   "type": 3,
@@ -366,7 +369,7 @@
                     "aggregation": 5,
                     "title": "Managed Device Check-In Stats - {TimeRange}",
                     "timeContext": {
-                      "durationMs": 2419200000
+                      "durationMs": 7776000000
                     },
                     "timeContextFromParameter": "TimeRange",
                     "queryType": 0,
@@ -398,7 +401,7 @@
                     "showAnalytics": true,
                     "title": "Client Actions - Daily Summary",
                     "timeContext": {
-                      "durationMs": 0
+                      "durationMs": 7776000000
                     },
                     "timeContextFromParameter": "TimeRange",
                     "showExportToExcel": true,
@@ -488,7 +491,7 @@
                     "showAnalytics": true,
                     "title": "Client Actions - Daily Summary",
                     "timeContext": {
-                      "durationMs": 0
+                      "durationMs": 7776000000
                     },
                     "timeContextFromParameter": "TimeRange",
                     "showExportToExcel": true,
@@ -620,6 +623,7 @@
       "content": {
         "version": "NotebookGroup/1.0",
         "groupType": "editable",
+        "loadType": "always",
         "items": [
           {
             "type": 12,
@@ -684,7 +688,7 @@
                     "size": 1,
                     "title": "Sign In Result",
                     "timeContext": {
-                      "durationMs": 2419200000
+                      "durationMs": 7776000000
                     },
                     "timeContextFromParameter": "TimeRange",
                     "queryType": 0,
@@ -928,7 +932,7 @@
               "size": 4,
               "title": "CloudLAPS Admin Password Retrieval - By Admin - {TimeRange}",
               "timeContext": {
-                "durationMs": 2419200000
+                "durationMs": 7776000000
               },
               "timeContextFromParameter": "TimeRange",
               "queryType": 0,
@@ -975,7 +979,7 @@
               "showAnalytics": true,
               "title": "All Intune Active Devices - Password Requests",
               "timeContext": {
-                "durationMs": 2419200000
+                "durationMs": 0
               },
               "timeContextFromParameter": "TimeRange",
               "showExportToExcel": true,
@@ -1018,8 +1022,8 @@
                           },
                           {
                             "name": "User",
-                            "source": "static",
-                            "value": "Unable tp display"
+                            "source": "column",
+                            "value": "UserName"
                           }
                         ]
                       }
@@ -1195,7 +1199,7 @@
               "showAnalytics": true,
               "title": "All Devices - Password Requests",
               "timeContext": {
-                "durationMs": 2419200000
+                "durationMs": 0
               },
               "timeContextFromParameter": "TimeRange",
               "showExportToExcel": true,
@@ -1359,7 +1363,7 @@
                   "name": "DeviceSerial",
                   "label": "Device Serial Number",
                   "type": 1,
-                  "value": "",
+                  "value": "5CG12827PL",
                   "timeContext": {
                     "durationMs": 86400000
                   }
@@ -1379,7 +1383,7 @@
               "size": 1,
               "aggregation": 5,
               "timeContext": {
-                "durationMs": 0
+                "durationMs": 7776000000
               },
               "timeContextFromParameter": "TimeRange",
               "queryType": 0,
@@ -1413,7 +1417,7 @@
               "showAnalytics": true,
               "title": "Client Details",
               "timeContext": {
-                "durationMs": 0
+                "durationMs": 7776000000
               },
               "timeContextFromParameter": "TimeRange",
               "showExportToExcel": true,
@@ -1572,7 +1576,7 @@
                     "size": 0,
                     "title": "Sign In Location Map",
                     "timeContext": {
-                      "durationMs": 2419200000
+                      "durationMs": 7776000000
                     },
                     "timeContextFromParameter": "TimeRange",
                     "queryType": 0,
@@ -1658,7 +1662,7 @@
                           "size": 1,
                           "title": "Top Sign-In Locations - Countries",
                           "timeContext": {
-                            "durationMs": 2419200000
+                            "durationMs": 7776000000
                           },
                           "timeContextFromParameter": "TimeRange",
                           "queryType": 0,
