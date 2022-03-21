@@ -36,6 +36,18 @@ param PortalAppServicePlanSKU string = 'S1'
 param KeyVaultName string
 @description('Provide a name for the Log Analytics workspace.')
 param LogAnalyticsWorkspaceName string
+@allowed([
+  'CapacityReservation'
+  'Free'
+  'LACluster'
+  'PerGB2018'
+  'PerNode'
+  'Premium'
+  'Standalone'
+  'Standard'
+])
+@description('Pricing tier: PerGB2018 or legacy tiers (Free, Standalone, PerNode, Standard or Premium) which are not available to all customers.')
+param LogAnalyticsWorkspaceSKU string = 'PerGB2018'
 @description('Provide any tags required by your organization (optional)')
 param Tags object = {}
 
