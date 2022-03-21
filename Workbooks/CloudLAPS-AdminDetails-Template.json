@@ -1,0 +1,200 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "e12b082e-be24-4a7d-8fd9-bae45f7b181c",
+            "version": "KqlParameterItem/1.0",
+            "name": "UserPrincipalName",
+            "type": 1,
+            "description": "Used for UPN pass through from parent workbook",
+            "isRequired": true,
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 86400000
+            }
+          },
+          {
+            "id": "db1e87f9-0ce1-4db7-bf61-d219f915c879",
+            "version": "KqlParameterItem/1.0",
+            "name": "User",
+            "type": 1,
+            "description": "Pass through parameter to display user details from parent workbook",
+            "isRequired": true,
+            "isHiddenWhenLocked": true,
+            "timeContext": {
+              "durationMs": 86400000
+            }
+          },
+          {
+            "id": "b65a898c-456d-4aaf-a958-d9e846d66775",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "isHiddenWhenLocked": true,
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 300000
+                },
+                {
+                  "durationMs": 900000
+                },
+                {
+                  "durationMs": 1800000
+                },
+                {
+                  "durationMs": 3600000
+                },
+                {
+                  "durationMs": 14400000
+                },
+                {
+                  "durationMs": 43200000
+                },
+                {
+                  "durationMs": 86400000
+                },
+                {
+                  "durationMs": 172800000
+                },
+                {
+                  "durationMs": 259200000
+                },
+                {
+                  "durationMs": 604800000
+                },
+                {
+                  "durationMs": 1209600000
+                },
+                {
+                  "durationMs": 2419200000
+                },
+                {
+                  "durationMs": 2592000000
+                },
+                {
+                  "durationMs": 5184000000
+                },
+                {
+                  "durationMs": 7776000000
+                }
+              ]
+            },
+            "timeContext": {
+              "durationMs": 86400000
+            }
+          },
+          {
+            "id": "4d23d49f-b283-41a6-bc7e-e885368d129c",
+            "version": "KqlParameterItem/1.0",
+            "name": "AppRegistrationName",
+            "type": 1,
+            "isHiddenWhenLocked": true
+          }
+        ],
+        "style": "above",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "Template Parameters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Admin User Details - {TimeRange}\n\n---\n\n<table class=\"tg\">\n<thead>\n  <tr>\n    <th class=\"tg-0lax\" colspan=\"2\">Account Information</th>\n  </tr>\n</thead>\n<tbody>\n  <tr>\n    <td class=\"tg-0lax\">User</td>\n    <td class=\"tg-0lax\">{User}</td>\n  </tr>\n  <tr>\n    <td class=\"tg-0lax\">UserPrincipalName</td>\n    <td class=\"tg-0lax\">{UserPrincipalName}</td>\n  </tr>\n</tbody>\n</table>\n\n---\n\nBelow are detailed sign in details for the selected admin account."
+      },
+      "name": "Admin User Details"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "CloudLAPSAudit_CL\r\n| where UserPrincipalName_s contains \"{UserPrincipalName}\"\r\n| make-series Trend = count() default = 0 on TimeGenerated from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain} by UserPrincipalName_s",
+        "size": 1,
+        "title": "Password Retrievals",
+        "noDataMessageStyle": 3,
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart"
+      },
+      "name": "Admin Password Retrievals"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs \r\n| where UserPrincipalName contains \"{UserPrincipalName}\"\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| summarize count() by  City = tostring(LocationDetails.city), Location = tostring(LocationDetails.countryOrRegion)\r\n| top 10 by City",
+        "size": 3,
+        "title": "Sign Ins - Top Locations",
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "name": "Sign Ins - Top 10 Locations"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "SigninLogs \r\n| where UserPrincipalName contains \"{UserPrincipalName}\"\r\n| where AppDisplayName == \"{AppRegistrationName}\"\r\n| project TimeGenerated, UserPrincipalName, MultiFactor = tostring(Status.additionalDetails)\r\n| order by TimeGenerated desc",
+        "size": 1,
+        "title": "Sign In History",
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "showExportToExcel": true,
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "MultiFactor",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  {
+                    "operator": "contains",
+                    "thresholdValue": "MFA requirement satisfied",
+                    "representation": "success",
+                    "text": "{0}{1}"
+                  },
+                  {
+                    "operator": "contains",
+                    "thresholdValue": "MFA success",
+                    "representation": "success",
+                    "text": "{0}{1}"
+                  },
+                  {
+                    "operator": "is Empty",
+                    "representation": "Unknown",
+                    "text": "Unknown MFA Status"
+                  },
+                  {
+                    "operator": "Default",
+                    "thresholdValue": null,
+                    "representation": "2",
+                    "text": "{0}{1}"
+                  }
+                ],
+                "customColumnWidthSetting": "40ch"
+              }
+            }
+          ]
+        }
+      },
+      "name": "User Details - Admin Sign Ins"
+    }
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

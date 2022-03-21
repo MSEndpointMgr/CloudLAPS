@@ -61,16 +61,17 @@ var FunctionAppServicePlanName = '${FunctionAppName}-fa-plan'
 var PortalAppServicePlanName = toLower('${PortalWebAppName}-wa-plan')
 var FunctionAppInsightsName = '${FunctionAppName}-fa-ai'
 var PortalAppInsightsName = '${FunctionAppName}-wa-ai'
+var KeyVaultAppSettingsName = '${take(KeyVaultName, 21)}-as'
 
 // Create storage account for Function App
-resource storageaccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
+resource StorageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
   name: StorageAccountName
   location: resourceGroup().location
   kind: 'StorageV2'
   sku: {
     name: 'Standard_LRS'
   }
-  properties:{
+  properties: {
     supportsHttpsTrafficOnly: true
     accessTier: 'Hot'
     allowBlobPublicAccess: false
@@ -81,7 +82,7 @@ resource storageaccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
 }
 
 // Create app service plan for Function App
-resource appserviceplan 'Microsoft.Web/serverfarms@2021-01-15' = {
+resource FunctionAppServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
   name: FunctionAppServicePlanName
   location: resourceGroup().location
   kind: 'Windows'
@@ -113,8 +114,9 @@ resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    serverFarmId: appserviceplan.id
+    serverFarmId: FunctionAppServicePlan.id
     containerSize: 1536
+    httpsOnly: true
     siteConfig: {
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
@@ -123,15 +125,15 @@ resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
       appSettings: [
         {
           name: 'AzureWebJobsDashboard'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageaccount.name};AccountKey=${storageaccount.listKeys().keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageaccount.name};AccountKey=${storageaccount.listKeys().keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageaccount.name};AccountKey=${storageaccount.listKeys().keys[0].value}'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
         }
         {
           name: 'WEBSITE_CONTENTSHARE'
@@ -169,26 +171,6 @@ resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
           name: 'FUNCTIONS_WORKER_RUNTIME'
           value: 'powershell'
         }
-        {
-          name: 'UpdateFrequencyDays'
-          value: '3'
-        }
-        {
-          name: 'KeyVaultName'
-          value: KeyVaultName
-        }
-        {
-          name: 'DebugLogging'
-          value: 'False'
-        }
-        {
-          name: 'PasswordLength'
-          value: '16'
-        }
-        {
-          name: 'PasswordAllowedCharacters'
-          value: 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
-        }
       ]
     }
   }
@@ -201,7 +183,7 @@ resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10
   location: resourceGroup().location
   properties: {
     sku: {
-      name: LogAnalyticsWorkspaceSKU
+      name: 'PerGB2018'
     }
   }
 }
@@ -251,7 +233,7 @@ resource PortalAppService 'Microsoft.Web/sites@2020-06-01' = {
   }
 }
 
-// Create Key Vault
+// Create Key Vault for local admin passwords
 resource KeyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   name: KeyVaultName
   location: resourceGroup().location
@@ -288,6 +270,96 @@ resource KeyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
   }
 }
 
+// Create Key Vault for Function App application settings
+resource KeyVaultAppSettings 'Microsoft.KeyVault/vaults@2019-09-01' = {
+  name: KeyVaultAppSettingsName
+  location: resourceGroup().location
+  properties: {
+    enabledForDeployment: false
+    enabledForTemplateDeployment: false
+    enabledForDiskEncryption: false
+    tenantId: subscription().tenantId
+    accessPolicies: [
+      {
+        tenantId: FunctionApp.identity.tenantId
+        objectId: FunctionApp.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+      {
+        tenantId: PortalAppService.identity.tenantId
+        objectId: PortalAppService.identity.principalId
+        permissions: {
+          secrets: [
+            'get'
+          ]
+        }
+      }
+    ]
+    sku: {
+      name: 'standard'
+      family: 'A'
+    }
+  }
+}
+
+// Collect Log Analytics workspace properties to be added to Key Vault as secrets
+var LogAnalyticsWorkspaceId = LogAnalyticsWorkspace.properties.customerId
+var LogAnalyticsWorkspaceSharedKey = LogAnalyticsWorkspace.listKeys().primarySharedKey
+
+// Construct secrets in Key Vault
+resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${KeyVaultAppSettingsName}/LogAnalyticsWorkspaceId'
+  properties: {
+    value: LogAnalyticsWorkspaceId
+  }
+  dependsOn: [
+    KeyVaultAppSettings
+  ]
+}
+resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  name: '${KeyVaultAppSettingsName}/LogAnalyticsWorkspaceSharedKey'
+  properties: {
+    value: LogAnalyticsWorkspaceSharedKey
+  }
+  dependsOn: [
+    KeyVaultAppSettings
+  ]
+}
+
+// Deploy application settings for CloudLAPS Function App
+resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+  name: '${FunctionApp.name}/appsettings'
+  properties: {
+    AzureWebJobsDashboard: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
+    AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
+    WEBSITE_CONTENTSHARE: toLower('CloudLAPS')
+    WEBSITE_RUN_FROM_PACKAGE: '1'
+    AzureWebJobsDisableHomepage: 'true'
+    FUNCTIONS_EXTENSION_VERSION: '~3'
+    FUNCTIONS_WORKER_PROCESS_COUNT: '3'
+    PSWorkerInProcConcurrencyUpperBound: '10'
+    APPINSIGHTS_INSTRUMENTATIONKEY: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
+    APPLICATIONINSIGHTS_CONNECTION_STRING: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
+    FUNCTIONS_WORKER_RUNTIME: 'powershell'
+    UpdateFrequencyDays: '3'
+    KeyVaultName: KeyVaultName
+    DebugLogging: 'False'
+    PasswordLength: '16'
+    PasswordAllowedCharacters: 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz.:;,-_!?$%*=+&<>@#()23456789'
+    LogAnalyticsWorkspaceId: '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceId)'
+    LogAnalyticsWorkspaceSharedKey: '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
+    LogTypeClient: 'CloudLAPSClient'
+  }
+  dependsOn: [
+    FunctionAppZipDeploy
+  ]
+}
+
 // Deploy application settings for CloudLAPS Portal
 resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
   name: '${PortalAppService.name}/appsettings'
@@ -298,10 +370,13 @@ resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
       'AzureAd:TenantId': subscription().tenantId
       'AzureAd:ClientId': ApplicationID
       'KeyVault:Uri': KeyVault.properties.vaultUri
-      'LogAnalytics:WorkspaceId': LogAnalyticsWorkspace.properties.customerId
-      'LogAnalytics:SharedKey': LogAnalyticsWorkspace.listKeys().primarySharedKey
+      'LogAnalytics:WorkspaceId': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceId)'
+      'LogAnalytics:SharedKey': '@Microsoft.KeyVault(VaultName=${KeyVaultAppSettingsName};SecretName=LogAnalyticsWorkspaceSharedKey)'
       'LogAnalytics:LogType': 'CloudLAPSAudit'
   }
+  dependsOn: [
+    PortalZipDeploy
+  ]
 }
 
 // Add ZipDeploy for Function App
@@ -309,7 +384,7 @@ resource FunctionAppZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
     parent: FunctionApp
     name: 'ZipDeploy'
     properties: {
-        packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-FunctionApp1.0.0.zip'
+        packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-FunctionApp1.1.0.zip'
     }
 }
 
@@ -318,6 +393,6 @@ resource PortalZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
   parent: PortalAppService
   name: 'ZipDeploy'
   properties: {
-      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.0.0/CloudLAPS-Portal1.0.0.zip'
+      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-Portal1.1.0.zip'
   }
 }
