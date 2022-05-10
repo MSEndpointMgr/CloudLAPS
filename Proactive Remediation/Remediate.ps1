@@ -384,7 +384,7 @@ Process {
                             if (!($PasswordLastSet)) {
                                 Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 32 -Message "CloudLAPS: Local administrator account exists but is configured with 'User must change password at next logon', attempting to re-create account '$($LocalAdministratorName)'"
                                 try {
-                                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 34 -Message "CloudLAPS: Local administrator deleted."
+                                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 34 -Message "CloudLAPS: Local administrator account deleted."
                                     Remove-LocalUser -Name $LocalAdministratorName -Force
                                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 20 -Message "CloudLAPS: Local administrator account does not exist, attempt to create it"
                                     New-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires -AccountNeverExpires -UserMayNotChangePassword -ErrorAction Stop
@@ -396,7 +396,6 @@ Process {
                                             Add-LocalGroupMember -SID $Group -Member $LocalAdministratorName -ErrorAction Stop
                                         }
 
-                                        
                                         # Handle output for extended details in MEM portal
                                         $ExtendedOutput = "AdminAccountCreated"
                                     }
