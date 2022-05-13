@@ -14,7 +14,7 @@
     Author:      Nickolaj Andersen
     Contact:     @NickolajA
     Created:     2020-09-14
-    Updated:     2022-01-27
+    Updated:     2022-05-13
 
     Version history:
     1.0.0 - (2020-09-14) Script created
@@ -22,6 +22,7 @@
     1.0.2 - (2022-01-01) Updated virtual machine array with 'Google Compute Engine'
     1.1.0 - (2022-01-08) Added support for new SendClientEvent function to send client events related to passwor rotation
     1.1.1 - (2022-01-27) Added validation check to test if device is either AAD joined or Hybrid Azure AD joined
+    1.1.2 - (2022-05-13) Added support for "User must change password at next logon" checkbox. In that case, the account will be re-created. 
 #>
 Process {
     # Functions
