@@ -278,7 +278,7 @@ Process {
 
     # Control whether client-side events should be sent to Log Analytics workspace
     # Set to $true to enable this feature
-    $SendClientEvent = $true
+    $SendClientEvent = $false
 
     # Define event log variables
     $EventLogName = "CloudLAPS-Client"
