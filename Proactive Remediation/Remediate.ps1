@@ -14,7 +14,7 @@
     Author:      Nickolaj Andersen
     Contact:     @NickolajA
     Created:     2020-09-14
-    Updated:     2022-01-27
+    Updated:     2022-05-13
 
     Version history:
     1.0.0 - (2020-09-14) Script created
@@ -380,7 +380,38 @@ Process {
                             Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -ErrorAction Stop
                         }
                         else {
-                            Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -UserMayChangePassword $false -ErrorAction Stop
+                            $PasswordLastSet = (Get-LocalUser $LocalAdministratorName | Select-Object *).PasswordLastSet
+                            if (!($PasswordLastSet)) {
+                                Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 32 -Message "CloudLAPS: Local administrator account exists but is configured with 'User must change password at next logon', attempting to re-create account '$($LocalAdministratorName)'"
+                                try {
+                                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 34 -Message "CloudLAPS: Local administrator account deleted."
+                                    Remove-LocalUser -Name $LocalAdministratorName
+                                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 20 -Message "CloudLAPS: Local administrator account does not exist, attempt to create it"
+                                    New-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires -AccountNeverExpires -UserMayNotChangePassword -ErrorAction Stop
+                                    try {
+                                        # Add to local built-in security groups: Administrators (S-1-5-32-544)
+                                        foreach ($Group in @("S-1-5-32-544")) {
+                                            $GroupName = Get-LocalGroup -SID $Group | Select-Object -ExpandProperty "Name"
+                                            Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 22 -Message "CloudLAPS: Adding local administrator account to security group '$($GroupName)'"
+                                            Add-LocalGroupMember -SID $Group -Member $LocalAdministratorName -ErrorAction Stop
+                                        }
+
+                                        # Handle output for extended details in MEM portal
+                                        $ExtendedOutput = "AdminAccountCreated"
+                                    }
+                                    catch [System.Exception] {
+                                        Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 23 -Message "CloudLAPS: Failed to add '$($LocalAdministratorName)' user account as a member of local '$($GroupName)' group. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
+                                    }
+                                }
+                                catch [System.Exception] {
+                                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 23 -Message "CloudLAPS: Failed to re-create '$($LocalAdministratorName)' local user account. Error message: $($PSItem.Exception.Message)"; $ExitCode = 1
+                                }
+                            }
+                            else {                   
+                                Set-LocalUser -Name $LocalAdministratorName -Password $SecurePassword -PasswordNeverExpires $true -UserMayChangePassword $false -ErrorAction Stop 
+                            }
+                            # Handle output for extended details in MEM portal
+                            $ExtendedOutput = "PasswordRotated"
                         }
                         
                         # Handle output for extended details in MEM portal
