@@ -70,18 +70,19 @@ resource StorageAccount 'Microsoft.Storage/storageAccounts@2021-02-01' = {
 }
 
 // Create app service plan for Function App
-resource FunctionAppServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
+resource FunctionAppServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: FunctionAppServicePlanName
   location: resourceGroup().location
   kind: 'Windows'
   sku: {
     name: FunctionAppServicePlanSKU
   }
+  properties: {}
   tags: Tags
 }
 
 // Create application insights for Function App
-resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' = {
+resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02' = {
   name: FunctionAppInsightsName
   location: resourceGroup().location
   kind: 'web'
@@ -149,11 +150,11 @@ resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
+          value: reference(FunctionAppInsightsComponents.id, '2020-02-02').InstrumentationKey
         }
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
+          value: reference(FunctionAppInsightsComponents.id, '2020-02-02').ConnectionString
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
@@ -166,7 +167,7 @@ resource FunctionApp 'Microsoft.Web/sites@2020-12-01' = {
 }
 
 // Create Log Analytics workspace
-resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
+resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
   name: LogAnalyticsWorkspaceName
   location: resourceGroup().location
   properties: {
@@ -177,18 +178,19 @@ resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10
 }
 
 // Create app service plan for CloudLAPS portal
-resource AppServicePlan 'Microsoft.Web/serverfarms@2021-01-15' = {
+resource AppServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: PortalAppServicePlanName
   location: resourceGroup().location
   kind: 'Windows'
   sku: {
     name: PortalAppServicePlanSKU
   }
+  properties: {}
   tags: Tags
 }
 
 // Create application insights for CloudLAPS portal
-resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' = {
+resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02' = {
   name: PortalAppInsightsName
   location: resourceGroup().location
   kind: 'web'
@@ -201,7 +203,7 @@ resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-p
 }
 
 // Create app service for CloudLAPS portal
-resource PortalAppService 'Microsoft.Web/sites@2020-06-01' = {
+resource PortalAppService 'Microsoft.Web/sites@2022-03-01' = {
   name: PortalWebAppNameNoDash
   location: resourceGroup().location
   identity: {
@@ -222,7 +224,7 @@ resource PortalAppService 'Microsoft.Web/sites@2020-06-01' = {
 }
 
 // Create Key Vault for local admin passwords
-resource KeyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
+resource KeyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: KeyVaultName
   location: resourceGroup().location
   properties: {
@@ -259,7 +261,7 @@ resource KeyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
 }
 
 // Create Key Vault for Function App application settings
-resource KeyVaultAppSettings 'Microsoft.KeyVault/vaults@2019-09-01' = {
+resource KeyVaultAppSettings 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: KeyVaultAppSettingsName
   location: resourceGroup().location
   properties: {
@@ -299,7 +301,7 @@ var LogAnalyticsWorkspaceId = LogAnalyticsWorkspace.properties.customerId
 var LogAnalyticsWorkspaceSharedKey = LogAnalyticsWorkspace.listKeys().primarySharedKey
 
 // Construct secrets in Key Vault
-resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   name: '${KeyVaultAppSettingsName}/LogAnalyticsWorkspaceId'
   properties: {
     value: LogAnalyticsWorkspaceId
@@ -308,7 +310,7 @@ resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
     KeyVaultAppSettings
   ]
 }
-resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   name: '${KeyVaultAppSettingsName}/LogAnalyticsWorkspaceSharedKey'
   properties: {
     value: LogAnalyticsWorkspaceSharedKey
@@ -319,7 +321,7 @@ resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
 }
 
 // Deploy application settings for CloudLAPS Function App
-resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+resource FunctionAppSettings 'Microsoft.Web/sites/config@2022-03-01' = {
   name: '${FunctionApp.name}/appsettings'
   properties: {
     AzureWebJobsDashboard: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
@@ -331,8 +333,8 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
     FUNCTIONS_EXTENSION_VERSION: '~3'
     FUNCTIONS_WORKER_PROCESS_COUNT: '3'
     PSWorkerInProcConcurrencyUpperBound: '10'
-    APPINSIGHTS_INSTRUMENTATIONKEY: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
-    APPLICATIONINSIGHTS_CONNECTION_STRING: reference(FunctionAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
+    APPINSIGHTS_INSTRUMENTATIONKEY: reference(FunctionAppInsightsComponents.id, '2020-02-02').InstrumentationKey
+    APPLICATIONINSIGHTS_CONNECTION_STRING: reference(FunctionAppInsightsComponents.id, '2020-02-02').ConnectionString
     FUNCTIONS_WORKER_RUNTIME: 'powershell'
     UpdateFrequencyDays: '3'
     KeyVaultName: KeyVaultName
@@ -349,12 +351,12 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
 }
 
 // Deploy application settings for CloudLAPS Portal
-resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2022-03-01' = {
   name: '${PortalAppService.name}/appsettings'
   properties: {
       AzureWebJobsSecretStorageKeyVaultName: KeyVault.name
-      APPLICATIONINSIGHTS_CONNECTION_STRING: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').ConnectionString
-      APPINSIGHTS_INSTRUMENTATIONKEY: reference(PortalAppInsightsComponents.id, '2020-02-02-preview').InstrumentationKey
+      APPLICATIONINSIGHTS_CONNECTION_STRING: reference(PortalAppInsightsComponents.id, '2020-02-02').ConnectionString
+      APPINSIGHTS_INSTRUMENTATIONKEY: reference(PortalAppInsightsComponents.id, '2020-02-02').InstrumentationKey
       'AzureAd:TenantId': subscription().tenantId
       'AzureAd:ClientId': ApplicationID
       'KeyVault:Uri': KeyVault.properties.vaultUri

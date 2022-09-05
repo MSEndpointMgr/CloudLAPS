@@ -299,25 +299,25 @@ Process {
 
         # Construct SetSecret function request header
         $SetSecretHeaderTable = [ordered]@{
-            DeviceName   = $env:COMPUTERNAME
-            DeviceID     = $AzureADDeviceID
+            DeviceName = $env:COMPUTERNAME
+            DeviceID = $AzureADDeviceID
             SerialNumber = if (-not([string]::IsNullOrEmpty($SerialNumber))) { $SerialNumber } else { $env:COMPUTERNAME } # fall back to computer name if serial number is not present
-            Type         = $ComputerSystemType
-            Signature    = $Signature
-            Thumbprint   = $CertificateThumbprint
-            PublicKey    = $PublicKeyBytesEncoded
-            ContentType  = "Local Administrator"
-            UserName     = $LocalAdministratorName
+            Type = $ComputerSystemType
+            Signature = $Signature
+            Thumbprint = $CertificateThumbprint
+            PublicKey = $PublicKeyBytesEncoded
+            ContentType = "Local Administrator"
+            UserName = $LocalAdministratorName
         }
 
         # Construct SendClientEvent request header
         $SendClientEventHeaderTable = [ordered]@{
-            DeviceName             = $env:COMPUTERNAME
-            DeviceID               = $AzureADDeviceID
-            SerialNumber           = if (-not([string]::IsNullOrEmpty($SerialNumber))) { $SerialNumber } else { $env:COMPUTERNAME } # fall back to computer name if serial number is not present
-            Signature              = $Signature
-            Thumbprint             = $CertificateThumbprint
-            PublicKey              = $PublicKeyBytesEncoded        
+            DeviceName = $env:COMPUTERNAME
+            DeviceID = $AzureADDeviceID
+            SerialNumber = if (-not([string]::IsNullOrEmpty($SerialNumber)) -and ($SerialNumber -ne "System Serial Number")) { $SerialNumber } else { $env:COMPUTERNAME } # fall back to computer name if serial number is not present or equals "System Serial Number"
+            Signature = $Signature
+            Thumbprint = $CertificateThumbprint
+            PublicKey = $PublicKeyBytesEncoded         
             PasswordRotationResult = ""
             DateTimeUtc            = (Get-Date).ToUniversalTime().ToString()
             ClientEventMessage     = ""

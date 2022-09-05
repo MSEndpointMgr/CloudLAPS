@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1008.15138",
-      "templateHash": "339429216216836007"
+      "version": "0.9.1.41621",
+      "templateHash": "16334082401312218899"
     }
   },
   "parameters": {
@@ -84,7 +84,6 @@
       }
     }
   },
-  "functions": [],
   "variables": {
     "UniqueString": "[uniqueString(resourceGroup().id)]",
     "FunctionAppNameNoDash": "[replace(parameters('FunctionAppName'), '-', '')]",
@@ -118,18 +117,19 @@
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2021-01-15",
+      "apiVersion": "2022-03-01",
       "name": "[variables('FunctionAppServicePlanName')]",
       "location": "[resourceGroup().location]",
       "kind": "Windows",
       "sku": {
         "name": "[parameters('FunctionAppServicePlanSKU')]"
       },
+      "properties": {},
       "tags": "[parameters('Tags')]"
     },
     {
       "type": "Microsoft.Insights/components",
-      "apiVersion": "2020-02-02-preview",
+      "apiVersion": "2020-02-02",
       "name": "[variables('FunctionAppInsightsName')]",
       "location": "[resourceGroup().location]",
       "kind": "web",
@@ -195,11 +195,11 @@
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').InstrumentationKey]"
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02').InstrumentationKey]"
             },
             {
               "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-              "value": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').ConnectionString]"
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02').ConnectionString]"
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -217,7 +217,7 @@
     },
     {
       "type": "Microsoft.OperationalInsights/workspaces",
-      "apiVersion": "2020-10-01",
+      "apiVersion": "2021-06-01",
       "name": "[parameters('LogAnalyticsWorkspaceName')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -228,18 +228,19 @@
     },
     {
       "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2021-01-15",
+      "apiVersion": "2022-03-01",
       "name": "[variables('PortalAppServicePlanName')]",
       "location": "[resourceGroup().location]",
       "kind": "Windows",
       "sku": {
         "name": "[parameters('PortalAppServicePlanSKU')]"
       },
+      "properties": {},
       "tags": "[parameters('Tags')]"
     },
     {
       "type": "Microsoft.Insights/components",
-      "apiVersion": "2020-02-02-preview",
+      "apiVersion": "2020-02-02",
       "name": "[variables('PortalAppInsightsName')]",
       "location": "[resourceGroup().location]",
       "kind": "web",
@@ -250,7 +251,7 @@
     },
     {
       "type": "Microsoft.Web/sites",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-03-01",
       "name": "[variables('PortalWebAppNameNoDash')]",
       "location": "[resourceGroup().location]",
       "identity": {
@@ -274,7 +275,7 @@
     },
     {
       "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2022-07-01",
       "name": "[parameters('KeyVaultName')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -294,8 +295,8 @@
             }
           },
           {
-            "tenantId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2020-06-01', 'full').identity.tenantId]",
-            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2020-06-01', 'full').identity.principalId]",
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2022-03-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2022-03-01', 'full').identity.principalId]",
             "permissions": {
               "secrets": [
                 "get"
@@ -315,7 +316,7 @@
     },
     {
       "type": "Microsoft.KeyVault/vaults",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2022-07-01",
       "name": "[variables('KeyVaultAppSettingsName')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -334,8 +335,8 @@
             }
           },
           {
-            "tenantId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2020-06-01', 'full').identity.tenantId]",
-            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2020-06-01', 'full').identity.principalId]",
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2022-03-01', 'full').identity.tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('PortalWebAppNameNoDash')), '2022-03-01', 'full').identity.principalId]",
             "permissions": {
               "secrets": [
                 "get"
@@ -355,7 +356,7 @@
     },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2022-07-01",
       "name": "[format('{0}/LogAnalyticsWorkspaceId', variables('KeyVaultAppSettingsName'))]",
       "properties": {
         "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName'))).customerId]"
@@ -367,10 +368,10 @@
     },
     {
       "type": "Microsoft.KeyVault/vaults/secrets",
-      "apiVersion": "2019-09-01",
+      "apiVersion": "2022-07-01",
       "name": "[format('{0}/LogAnalyticsWorkspaceSharedKey', variables('KeyVaultAppSettingsName'))]",
       "properties": {
-        "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2020-10-01').primarySharedKey]"
+        "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('LogAnalyticsWorkspaceName')), '2021-06-01').primarySharedKey]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.KeyVault/vaults', variables('KeyVaultAppSettingsName'))]",
@@ -379,7 +380,7 @@
     },
     {
       "type": "Microsoft.Web/sites/config",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-03-01",
       "name": "[format('{0}/appsettings', parameters('FunctionAppName'))]",
       "properties": {
         "AzureWebJobsDashboard": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', variables('StorageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('StorageAccountName')), '2021-02-01').keys[0].value)]",
@@ -391,8 +392,8 @@
         "FUNCTIONS_EXTENSION_VERSION": "~3",
         "FUNCTIONS_WORKER_PROCESS_COUNT": "3",
         "PSWorkerInProcConcurrencyUpperBound": "10",
-        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').InstrumentationKey]",
-        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02-preview').ConnectionString]",
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02').InstrumentationKey]",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('FunctionAppInsightsName')), '2020-02-02').ConnectionString]",
         "FUNCTIONS_WORKER_RUNTIME": "powershell",
         "UpdateFrequencyDays": "3",
         "KeyVaultName": "[parameters('KeyVaultName')]",
@@ -412,12 +413,12 @@
     },
     {
       "type": "Microsoft.Web/sites/config",
-      "apiVersion": "2020-06-01",
+      "apiVersion": "2022-03-01",
       "name": "[format('{0}/appsettings', variables('PortalWebAppNameNoDash'))]",
       "properties": {
         "AzureWebJobsSecretStorageKeyVaultName": "[parameters('KeyVaultName')]",
-        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName')), '2020-02-02-preview').ConnectionString]",
-        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName')), '2020-02-02-preview').InstrumentationKey]",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName')), '2020-02-02').ConnectionString]",
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('PortalAppInsightsName')), '2020-02-02').InstrumentationKey]",
         "AzureAd:TenantId": "[subscription().tenantId]",
         "AzureAd:ClientId": "[parameters('ApplicationID')]",
         "KeyVault:Uri": "[reference(resourceId('Microsoft.KeyVault/vaults', parameters('KeyVaultName'))).vaultUri]",
