@@ -14,7 +14,7 @@
     Author:      Nickolaj Andersen
     Contact:     @NickolajA
     Created:     2020-09-14
-    Updated:     2022-01-27
+    Updated:     2022-09-15
 
     Version history:
     1.0.0 - (2020-09-14) Script created
@@ -22,6 +22,7 @@
     1.0.2 - (2022-01-01) Updated virtual machine array with 'Google Compute Engine'
     1.1.0 - (2022-01-08) Added support for new SendClientEvent function to send client events related to passwor rotation
     1.1.1 - (2022-01-27) Added validation check to test if device is either AAD joined or Hybrid Azure AD joined
+    1.1.2 - (2022-09-15) Support for detecting the device registration certificate based on deviceId instead of thumbprint data in JoinInfo key
 #>
 Process {
     # Functions
@@ -69,16 +70,24 @@ Process {
         
             Version history:
             1.0.0 - (2021-05-26) Function created
+            1.0.1 - (2022-09-15) Support for detecting the device registration certificate based on deviceId instead of thumbprint data in JoinInfo key
         #>
         Process {
             # Define Cloud Domain Join information registry path
             $AzureADJoinInfoRegistryKeyPath = "HKLM:\SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo"
 
             # Retrieve the child key name that is the thumbprint of the machine certificate containing the device identifier guid
-            $AzureADJoinInfoThumbprint = Get-ChildItem -Path $AzureADJoinInfoRegistryKeyPath | Select-Object -ExpandProperty "PSChildName"
-            if ($AzureADJoinInfoThumbprint -ne $null) {
+            $AzureADJoinInfoKey = Get-ChildItem -Path $AzureADJoinInfoRegistryKeyPath | Select-Object -ExpandProperty "PSChildName"
+            if ($AzureADJoinInfoKey -ne $null) {
+                # Match key data against GUID regex
+                if ([guid]::TryParse($AzureADJoinInfoKey, $([ref][guid]::Empty))) {
+                    $AzureADJoinCertificate = Get-ChildItem -Path "Cert:\LocalMachine\My" -Recurse | Where-Object { $PSItem.Subject -like "CN=$($AzureADJoinInfoKey)" }
+                }
+                else {
+                    $AzureADJoinCertificate = Get-ChildItem -Path "Cert:\LocalMachine\My" -Recurse | Where-Object { $PSItem.Thumbprint -eq $AzureADJoinInfoKey }    
+                }
+
                 # Retrieve the machine certificate based on thumbprint from registry key
-                $AzureADJoinCertificate = Get-ChildItem -Path "Cert:\LocalMachine\My" -Recurse | Where-Object { $PSItem.Thumbprint -eq $AzureADJoinInfoThumbprint }
                 if ($AzureADJoinCertificate -ne $null) {
                     # Determine the device identifier from the subject name
                     $AzureADDeviceID = ($AzureADJoinCertificate | Select-Object -ExpandProperty "Subject") -replace "CN=", ""
