@@ -78,6 +78,7 @@ $Thumbprint = $Request.Body.Thumbprint
 $PublicKey = $Request.Body.PublicKey
 $ContentType = $Request.Body.ContentType
 $UserName = $Request.Body.UserName
+$SecretUpdateOverride = if ([string]::IsNullOrEmpty($Request.Body.SecretUpdateOverride)) { $false } else { $Request.Body.SecretUpdateOverride }
 
 # Validate request header values
 $HeaderValidationList = @(@{ "DeviceName" = $DeviceName }, @{ "DeviceID" = $DeviceID }, @{ "SerialNumber" = $SerialNumber }, @{ "Type" = $Type }, @{ "Signature" = $Signature }, @{ "Thumbprint" = $Thumbprint }, @{ "PublicKey" = $PublicKey }, @{ "ContentType" = $ContentType }, @{ "UserName" = $UserName })
@@ -159,12 +160,17 @@ if ($HeaderValidation -eq $true) {
                         $KeyVaultSecret = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $SecretName -ErrorAction SilentlyContinue
                         if ($KeyVaultSecret -ne $null) {
                             Write-Output -InputObject "Existing secret was last updated on (UTC): $(($KeyVaultSecret.Updated).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss"))"
-                            if ((Get-Date).ToUniversalTime() -ge ($KeyVaultSecret.Updated).ToUniversalTime().AddDays($KeyVaultUpdateFrequencyDays)) {
+                            if ($SecretUpdateOverride -eq $true) {
                                 $KeyVaultSecretUpdateAllowed = $true
                             }
                             else {
-                                Write-Output -InputObject "Secret update will be allowed first after (UTC): $(($KeyVaultSecret.Updated).ToUniversalTime().AddDays($KeyVaultUpdateFrequencyDays).ToString("yyyy-MM-dd HH:mm:ss"))"
-                                $KeyVaultSecretUpdateAllowed = $false
+                                if ((Get-Date).ToUniversalTime() -ge ($KeyVaultSecret.Updated).ToUniversalTime().AddDays($KeyVaultUpdateFrequencyDays)) {
+                                    $KeyVaultSecretUpdateAllowed = $true
+                                }
+                                else {
+                                    Write-Output -InputObject "Secret update will be allowed first after (UTC): $(($KeyVaultSecret.Updated).ToUniversalTime().AddDays($KeyVaultUpdateFrequencyDays).ToString("yyyy-MM-dd HH:mm:ss"))"
+                                    $KeyVaultSecretUpdateAllowed = $false
+                                }
                             }
                         }
                         else {
@@ -174,6 +180,8 @@ if ($HeaderValidation -eq $true) {
             
                         # Continue if update of existing secret was allowed or if new should be created
                         if ($KeyVaultSecretUpdateAllowed -eq $true) {
+                            Write-Output -InputObject "Secret update is allowed, SecretUpdateOverride value is $($SecretUpdateOverride)"
+
                             # Generate a random password
                             $Password = Invoke-PasswordGeneration -Length $PasswordLength -AllowedCharacters $PasswordAllowedCharacters
                             $SecretValue = ConvertTo-SecureString -String $Password -AsPlainText -Force
