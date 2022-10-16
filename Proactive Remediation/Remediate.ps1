@@ -14,15 +14,17 @@
     Author:      Nickolaj Andersen
     Contact:     @NickolajA
     Created:     2020-09-14
-    Updated:     2022-09-15
+    Updated:     2022-10-16
 
     Version history:
-    1.0.0 - (2020-09-14) Script created
-    1.0.1 - (2021-10-07) Updated with output for extended details in MEM portal
-    1.0.2 - (2022-01-01) Updated virtual machine array with 'Google Compute Engine'
-    1.1.0 - (2022-01-08) Added support for new SendClientEvent function to send client events related to passwor rotation
-    1.1.1 - (2022-01-27) Added validation check to test if device is either AAD joined or Hybrid Azure AD joined
-    1.1.2 - (2022-09-15) Support for detecting the device registration certificate based on deviceId instead of thumbprint data in JoinInfo key
+    1.0.0 - (2020-09-14) Script created.
+    1.0.1 - (2021-10-07) Updated with output for extended details in MEM portal.
+    1.0.2 - (2022-01-01) Updated virtual machine array with 'Google Compute Engine'.
+    1.1.0 - (2022-01-08) Added support for new SendClientEvent function to send client events related to passwor rotation.
+    1.1.1 - (2022-01-27) Added validation check to test if device is either AAD joined or Hybrid Azure AD joined.
+    1.1.2 - (2022-09-15) Support for detecting the device registration certificate based on deviceId instead of thumbprint data in JoinInfo key.
+    1.2.0 - (2022-10-16) Added support to enforce password rotation of an existing device in CloudLAPS, but has been re-provisioned.
+                         Also extended the main try and catch with additional HTTP response codes for more detailed error messages.
 #>
 Process {
     # Functions
@@ -316,6 +318,7 @@ Process {
             PublicKey = $PublicKeyBytesEncoded
             ContentType = "Local Administrator"
             UserName = $LocalAdministratorName
+            SecretUpdateOverride = $false
         }
 
         # Construct SendClientEvent request header
@@ -341,6 +344,14 @@ Process {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
         try {
+            # Check if existing local administrator user account exists
+            $LocalAdministratorAccount = Get-LocalUser -Name $LocalAdministratorName -ErrorAction SilentlyContinue
+
+            # Amend header table if local administrator account doesn't exist, enforce password creation for devices that were previously provisioned, but have been re-provisioned
+            if ($LocalAdministratorAccount -eq $null) {
+                $SetSecretHeaderTable["SecretUpdateOverride"] = $true
+            }
+
             # Call Azure Function SetSecret to store new secret in Key Vault for current computer and have the randomly generated password returned
             Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Information -EventId 11 -Message "CloudLAPS: Calling Azure Function API for password generation and secret update"
             $APIResponse = Invoke-RestMethod -Method "POST" -Uri $SetSecretURI -Body ($SetSecretHeaderTable | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
@@ -352,8 +363,6 @@ Process {
                 # Convert password returned from Azure Function API call to secure string
                 $SecurePassword = ConvertTo-SecureString -String $APIResponse -AsPlainText -Force
 
-                # Check if existing local administrator user account exists
-                $LocalAdministratorAccount = Get-LocalUser -Name $LocalAdministratorName -ErrorAction SilentlyContinue
                 if ($LocalAdministratorAccount -eq $null) {
                     # Create local administrator account
                     try {
@@ -440,10 +449,28 @@ Process {
                     # Write to event log and set exit code
                     Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 15 -Message "CloudLAPS: BadRequest, failed to update password"; $ExitCode = 1
                 }
+                "TooManyRequests" {
+                    # Handle output for extended details in MEM portal
+                    $FailureResult = "TooManyRequests"
+                    $FailureMessage = "Password rotation failed with TooManyRequests (throttled)"
+                    $ExtendedOutput = $FailureResult
+
+                    # Write to event log and set exit code
+                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 16 -Message "CloudLAPS: TooManyRequests returned by API, failed to update password"; $ExitCode = 1
+                }
+                "GatewayTimeout" {
+                    # Handle output for extended details in MEM portal
+                    $FailureResult = "GatewayTimeout"
+                    $FailureMessage = "Password rotation failed with GatewayTimeout"
+                    $ExtendedOutput = $FailureResult
+
+                    # Write to event log and set exit code
+                    Write-EventLog -LogName $EventLogName -Source $EventLogSource -EntryType Error -EventId 17 -Message "CloudLAPS: GatewayTimeout for API request, failed to update password"; $ExitCode = 1
+                }
                 default {
                     # Handle output for extended details in MEM portal
                     $FailureResult = "Failed"
-                    $FailureMessage = "Password rotation failed with unknown reason"
+                    $FailureMessage = "Password rotation failed with unhandled exception '$($PSItem.Exception.Response.StatusCode)'"
                     $ExtendedOutput = $FailureResult
 
                     # Write to event log and set exit code
