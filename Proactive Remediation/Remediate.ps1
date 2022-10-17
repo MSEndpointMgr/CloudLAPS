@@ -23,7 +23,7 @@
     1.1.0 - (2022-01-08) Added support for new SendClientEvent function to send client events related to passwor rotation.
     1.1.1 - (2022-01-27) Added validation check to test if device is either AAD joined or Hybrid Azure AD joined.
     1.1.2 - (2022-09-15) Support for detecting the device registration certificate based on deviceId instead of thumbprint data in JoinInfo key.
-    1.2.0 - (2022-10-16) Added support to enforce password rotation of an existing device in CloudLAPS, but has been re-provisioned.
+    1.2.0 - (2022-10-16) Added support to enforce password rotation of an existing device in CloudLAPS, after it has been re-provisioned.
                          Also extended the main try and catch with additional HTTP response codes for more detailed error messages.
 #>
 Process {
