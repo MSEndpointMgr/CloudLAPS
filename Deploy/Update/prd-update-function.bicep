@@ -24,25 +24,25 @@ var PortalAppInsightsName = '${FunctionAppName}-wa-ai'
 var KeyVaultAppSettingsName = '${take(KeyVaultName, 21)}-as'
 
 // Define existing resources based on param input
-resource FunctionApp 'Microsoft.Web/sites@2020-12-01' existing = { 
+resource FunctionApp 'Microsoft.Web/sites@2022-03-01' existing = { 
   name: FunctionAppName
 }
-resource PortalAppService 'Microsoft.Web/sites@2020-12-01' existing = { 
+resource PortalAppService 'Microsoft.Web/sites@2022-03-01' existing = { 
   name: PortalWebAppName
 }
-resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' existing = {
+resource LogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' existing = {
   name: LogAnalyticsWorkspaceName
 }
-resource KeyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
+resource KeyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   name: KeyVaultName
 }
-resource StorageAccount 'Microsoft.Storage/storageAccounts@2021-06-01' existing = {
+resource StorageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' existing = {
   name: StorageAccountName
 }
-resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' existing = {
+resource FunctionAppInsightsComponents 'Microsoft.Insights/components@2020-02-02' existing = {
   name: FunctionAppInsightsName
 }
-resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02-preview' existing = {
+resource PortalAppInsightsComponents 'Microsoft.Insights/components@2020-02-02' existing = {
   name: PortalAppInsightsName
 }
 
@@ -55,7 +55,7 @@ var KeyVaultUri = KeyVault.properties.vaultUri
 var KeyVaultUriNoSlash = substring(KeyVaultUri, 0, length(KeyVaultUri)-1)
 
 // Create Key Vault for Function App application settings
-resource KeyVaultAppSettings 'Microsoft.KeyVault/vaults@2019-09-01' = {
+resource KeyVaultAppSettings 'Microsoft.KeyVault/vaults@2022-07-01' = {
   name: KeyVaultAppSettingsName
   location: resourceGroup().location
   properties: {
@@ -91,7 +91,7 @@ resource KeyVaultAppSettings 'Microsoft.KeyVault/vaults@2019-09-01' = {
 }
 
 // Construct secrets in Key Vault
-resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   name: '${KeyVaultAppSettingsName}/LogAnalyticsWorkspaceId'
   properties: {
     value: LogAnalyticsWorkspaceId
@@ -100,7 +100,7 @@ resource WorkspaceIdSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
     KeyVaultAppSettings
   ]
 }
-resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   name: '${KeyVaultAppSettingsName}/LogAnalyticsWorkspaceSharedKey'
   properties: {
     value: LogAnalyticsWorkspaceSharedKey
@@ -111,7 +111,7 @@ resource SharedKeySecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
 }
 
 // Construct appSettings resource for Function App and ensure default values including new ones are added
-resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+resource FunctionAppSettings 'Microsoft.Web/sites/config@2022-03-01' = {
   name: '${FunctionApp.name}/appsettings'
   properties: {
     AzureWebJobsDashboard: 'DefaultEndpointsProtocol=https;AccountName=${StorageAccount.name};AccountKey=${StorageAccount.listKeys().keys[0].value}'
@@ -141,7 +141,7 @@ resource FunctionAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
 }
 
 // Construct appSettings resource for CloudLAPS Portal and ensure default values including new ones are added
-resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2020-06-01' = {
+resource PortalAppServiceAppSettings 'Microsoft.Web/sites/config@2022-03-01' = {
   name: '${PortalAppService.name}/appsettings'
   properties: {
       AzureWebJobsSecretStorageKeyVaultName: KeyVault.name
@@ -164,7 +164,7 @@ resource FunctionAppZipDeploy 'Microsoft.Web/sites/extensions@2015-08-01' = {
   parent: FunctionApp
   name: 'ZipDeploy'
   properties: {
-      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.1.0/CloudLAPS-FunctionApp1.1.0.zip'
+      packageUri: 'https://github.com/MSEndpointMgr/CloudLAPS/releases/download/1.2.0/CloudLAPS-FunctionApp1.2.0.zip'
   }
 }
 
