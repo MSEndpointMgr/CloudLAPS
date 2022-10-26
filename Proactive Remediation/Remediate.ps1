@@ -105,33 +105,46 @@ Process {
     }
 
     function Get-AzureADRegistrationCertificateThumbprint {
-        <#
-        .SYNOPSIS
-            Get the thumbprint of the certificate used for Azure AD device registration.
-        
-        .DESCRIPTION
-            Get the thumbprint of the certificate used for Azure AD device registration.
-        
-        .NOTES
-            Author:      Nickolaj Andersen
-            Contact:     @NickolajA
-            Created:     2021-06-03
-            Updated:     2021-06-03
-        
-            Version history:
-            1.0.0 - (2021-06-03) Function created
-        #>
-        Process {
-            # Define Cloud Domain Join information registry path
-            $AzureADJoinInfoRegistryKeyPath = "HKLM:\SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo"
+    <#
+    .SYNOPSIS
+        Get the thumbprint of the certificate used for Azure AD device registration.
     
-            # Retrieve the child key name that is the thumbprint of the machine certificate containing the device identifier guid
-            $AzureADJoinInfoThumbprint = Get-ChildItem -Path $AzureADJoinInfoRegistryKeyPath | Select-Object -ExpandProperty "PSChildName"
+    .DESCRIPTION
+        Get the thumbprint of the certificate used for Azure AD device registration.
     
-            # Handle return value
-            return $AzureADJoinInfoThumbprint
+    .NOTES
+        Author:      Nickolaj Andersen
+        Contributor: @JankeSkanke
+        Contact:     @NickolajA
+        Created:     2021-06-03
+        Updated:     2022-26-10
+    
+        Version history:
+        1.0.0 - (2021-06-03) Function created
+        1.1.0 - (2022-26-10) Added support for finding thumbprint for Cloud PCs @JankeSkanke
+    #>
+    Process {
+        # Define Cloud Domain Join information registry path
+        $AzureADJoinInfoRegistryKeyPath = "HKLM:\SYSTEM\CurrentControlSet\Control\CloudDomainJoin\JoinInfo"
+        # Retrieve the child key name that is the thumbprint of the machine certificate containing the device identifier guid
+        $AzureADJoinInfoKey = Get-ChildItem -Path $AzureADJoinInfoRegistryKeyPath | Select-Object -ExpandProperty "PSChildName"
+         # Retrieve the machine certificate based on thumbprint from registry key or Certificate (CloudPC)        
+        if ($AzureADJoinInfoKey -ne $null) {
+            # Match key data against GUID regex for CloudPC Support 
+            if ([guid]::TryParse($AzureADJoinInfoKey, $([ref][guid]::Empty))) {
+                #This is for CloudPC
+                $AzureADJoinCertificate = Get-ChildItem -Path "Cert:\LocalMachine\My" -Recurse | Where-Object { $PSItem.Subject -like "CN=$($AzureADJoinInfoKey)" }
+                $AzureADJoinInfoThumbprint = $AzureADJoinCertificate.Thumbprint
+            }
+            else {
+                # Retrieve the child key name that is the thumbprint of the machine certificate containing the device identifier guid (non-CloudPC)
+                $AzureADJoinInfoThumbprint = Get-ChildItem -Path $AzureADJoinInfoRegistryKeyPath | Select-Object -ExpandProperty "PSChildName"
+            }
         }
+        # Handle return value
+        return $AzureADJoinInfoThumbprint
     }
+}
     
     function New-RSACertificateSignature {
         <#
