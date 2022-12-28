@@ -295,8 +295,8 @@ Process {
 
     # Define the local administrator user name
     $LocalAdministratorName = "<Enter the name of the local administrator account>"
-	    
-	if (-not($LocalAdministratorName)) {
+
+    if (-not($LocalAdministratorName)) {
         $LocalAdministratorName = (Get-LocalUser | Where-Object {$_.SID -like "*-500"}).Name
         Enable-LocalUser -Name $LocalAdministratorName
     }
