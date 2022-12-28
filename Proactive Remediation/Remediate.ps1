@@ -298,7 +298,7 @@ Process {
 
     if (-not($LocalAdministratorName)) {
         $LocalAdministratorName = (Get-LocalUser | Where-Object {$_.SID -like "*-500"}).Name
-        Enable-LocalUser -Name $LocalAdministratorName
+        Enable-LocalUser -Name $LocalAdministratorName -ErrorAction SilentlyContinue
     }
 
     # Construct the required URI for the Azure Function URL
