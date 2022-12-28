@@ -25,7 +25,7 @@
     1.1.2 - (2022-09-15) Support for detecting the device registration certificate based on deviceId instead of thumbprint data in JoinInfo key.
     1.2.0 - (2022-10-16) Added support to enforce password rotation of an existing device in CloudLAPS, after it has been re-provisioned.
                          Also extended the main try and catch with additional HTTP response codes for more detailed error messages.
-    1.2.1 - (2022-12-28) Added support for localized Administrator name (Administrateur, Administrador, etc.) by using default administrator's SID (*-500).
+    1.2.1 - (2022-12-28) Added support for localized Administrator name (Administrateur, Administrador, etc.) by using default administrator (SID *-500).
 #>
 Process {
     # Functions
@@ -293,7 +293,7 @@ Process {
         }
     }
 
-    # Define the local administrator user name
+    # Define the local administrator user name. Leave empty to retrieve default administrator (SID *-500).
     $LocalAdministratorName = "<Enter the name of the local administrator account>"
 
     if (-not($LocalAdministratorName)) {
